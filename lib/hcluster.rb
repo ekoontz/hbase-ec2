@@ -73,12 +73,61 @@ module Hadoop
       AWS::S3::Service::buckets
     end
 
-    def create_image(options = {})
+    def create_image(tarfile)
       #upload tarball to @tars.
-      upload_tar @tarfile
+      @tarfile = tarfile
+      upload @tarfile
     end
 
-    def upload_tar(tarfile)
+    def create_image_from_remote(hadoop_tarfile,hbase_tarfile)
+      puts "remote bucket: #{@tars.name}; hadoop_tarfile: #{hadoop_tarfile}; hbase_tarfile: #{hbase_tarfile}"
+      #launch image creator.
+      launches = HCluster::do_launch({
+                                       :image_id => 'ami-f61dfd9f',
+                                       :key_name => "root",
+                                       :instance_type => "m1.large"},
+                                     "image-creator")
+      if (launches && launches[0])
+        image_creator = launches[0]
+      else 
+        raise "Could not launch image creator."
+      end
+
+      image_creator_hostname = image_creator.dnsName
+      puts "Started image creator: #{image_creator_hostname}"
+
+      HCluster::until_ssh_able([image_creator])
+
+      HCluster::scp_to(image_creator_hostname,"#{ENV['HOME']}/hbase-ec2/bin/functions.sh","/mnt")
+      HCluster::scp_to(image_creator_hostname,"#{ENV['HOME']}/hbase-ec2/bin/image/create-hbase-image-remote","/mnt")
+      HCluster::scp_to(image_creator_hostname,"#{ENV['HOME']}/hbase-ec2/bin/image/ec2-run-user-data","/etc/init.d")
+      
+      # Copy private key and certificate (for bundling image)
+      HCluster::scp_to(image_creator_hostname, EC2_ROOT_SSH_KEY, "/mnt")
+      HCluster::scp_to(image_creator_hostname, EC2_CERT, "/mnt")
+
+      hadoop_url = "http://#{@tars.name}.s3.amazonaws.com/#{hadoop_tarfile}"
+      hbase_url = "http://#{@tars.name}.s3.amazonaws.com/#{hbase_tarfile}"
+      hadoop_version = "0.20-tm-3"
+      hbase_version = "0.20-tm-3"
+      owner_id = ENV['AWS_ACCOUNT_ID'].gsub(/-/,'')
+      arch = "x86_64"
+
+      puts "sh -c \"ARCH=#{arch} HBASE_VERSION=#{hbase_version} HADOOP_VERSION=#{hadoop_version} HBASE_FILE=#{hbase_tarfile} HBASE_URL=#{hbase_url} HADOOP_URL=#{hadoop_url} LZO_URL=#{lzo_url} JAVA_URL=#{java_url} AWS_ACCOUNT_ID=#{owner_id} S3_BUCKET=#{options[:s3_bucket]} AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY']} AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID']} /mnt/create-hbase-image-remote\""
+
+      HCluster::ssh_to(image_creator_hostname,
+             "sh -c \"ARCH=#{arch} HBASE_VERSION=#{hbase_version} HADOOP_VERSION=#{hadoop_version} HBASE_FILE=#{hbase_file} HBASE_URL=#{hbase_url} HADOOP_URL=#{hadoop_url} LZO_URL=#{lzo_url} JAVA_URL=#{java_url} AWS_ACCOUNT_ID=#{owner_id} S3_BUCKET=#{options[:s3_bucket]} AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY']} AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID']} /mnt/create-hbase-image-remote\"",
+             HCluster::image_output_handler(options[:debug]),
+             HCluster::image_output_handler(options[:debug]))
+      puts "..done."
+
+    end
+
+
+
+
+
+    def upload(tarfile)
       filename = File.basename(tarfile)
       puts "Storing '#{filename}' in s3 bucket '#{@tars.name}'.."
       AWS::S3::S3Object.store filename, open(tarfile), @tars.name, :access => :public_read
@@ -706,14 +755,14 @@ module Hadoop
       puts "Creating and registering image: #{image_label}"
       puts "Starting a AMI with ID: #{@@default_base_ami_image}."
       
-      launch = do_launch({
+      launches = do_launch({
                            :image_id => @@default_base_ami_image,
                            :key_name => "root",
                            :instance_type => "m1.large"
                          },"image-creator")
       
-      if (launch && launch[0])
-        image_creator = launch[0]
+      if (launches && launches[0])
+        image_creator = launches[0]
       else 
         raise "Could not launch image creator."
       end
