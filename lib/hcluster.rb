@@ -340,18 +340,19 @@ module Hadoop
         end
 
         retval = @@shared_base_object.describe_images(options)
-        #filter by image_label
-        if image_label
-
-          retval2 = retval['imagesSet']['item'].collect{|image| 
-            if (image.name == image_label)
-              image
-            end
-          }.compact
-        else
-          retval2 = retval['imagesSet']['item'].detect{
-            |image| image['image_id'] == options[:image_id]
-          }
+        if retval['imagesSet']
+          #filter by image_label
+          if image_label
+            retval2 = retval['imagesSet']['item'].collect{|image| 
+              if (image.name == image_label)
+                image
+              end
+            }.compact
+          else
+            retval2 = retval['imagesSet']['item'].detect{
+              |image| image['image_id'] == options[:image_id]
+            }
+          end
         end
 
         if ((retval2 == nil) && (search_all_visible_images == true))
