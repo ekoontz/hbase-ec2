@@ -388,8 +388,6 @@ module Hadoop
   EC2_ROOT_SSH_KEY = ENV['EC2_ROOT_SSH_KEY'] ? "#{ENV['EC2_ROOT_SSH_KEY']}" : "#{ENV['HOME']}/.ec2/root.pem"
   EC2_CERT = ENV['EC2_CERT'] ? "#{ENV['EC2_CERT']}" : "#{ENV['HOME']}/.ec2/cert.pem"
     
-  puts "using #{EC2_ROOT_SSH_KEY} as ssh key."
-
   class HClusterStateError < StandardError
   end
 
@@ -1023,11 +1021,16 @@ module Hadoop
     def HCluster.do_launch(options,name="",on_boot = nil)
       # @@shared_base_object requires :image_id instead of :ami; I prefer the latter.
       options[:image_id] = options[:ami] if options[:ami]
-
+      #function param overrides options, if both are given.
+      options[:on_boot] = on_boot if on_boot
+      on_boot = options[:on_boot]
       instances = @@shared_base_object.run_instances(options)
       watch(name,instances)
       if on_boot
-        on_boot.call(instances.instancesSet.item)
+        instances.instancesSet.item.each_index {|i|
+          instance = instances.instancesSet.item[i]
+          on_boot.call(instance)
+        }
       end
       return instances.instancesSet.item
     end
