@@ -3,7 +3,7 @@
 require 'net/ssh'
 require 'net/scp'
 
-require 'defaults.rb'
+require 'lib/defaults.rb'
 
 module Hadoop
   class Himg
