@@ -1426,12 +1426,13 @@ module Hadoop
                         stdout_line_reader = lambda{|line,channel| puts line},
                         stderr_line_reader = lambda{|line,channel| puts "(stderr): #{line}"},
                         begin_output = nil,
-                        end_output = nil)
+                        end_output = nil,
+                        user = "root")
       # variant of ssh with different param ordering.
-      ssh_with_host(command,stdout_line_reader,stderr_line_reader,host,begin_output,end_output)
+      ssh_with_host(command,stdout_line_reader,stderr_line_reader,host,begin_output,end_output,user)
     end
     
-    def HCluster.ssh_with_host(command,stdout_line_reader,stderr_line_reader,host,begin_output,end_output)
+    def HCluster.ssh_with_host(command,stdout_line_reader,stderr_line_reader,host,begin_output,end_output,user="root")
       if command == nil
         interactive = true
       end
@@ -1449,7 +1450,7 @@ module Hadoop
           print "#{host} $ "
           command = gets
         end
-        Net::SSH.start(host,'root',
+        Net::SSH.start(host,user,
                        :keys => [EC2_ROOT_SSH_KEY],
                        :paranoid => false
                        ) do |ssh|
@@ -1507,8 +1508,9 @@ module Hadoop
                stdout_line_reader = HCluster.echo_stdout,
                stderr_line_reader = HCluster.echo_stderr,
                begin_output = nil,
-               end_output = nil)
-      HCluster.ssh_with_host(command,stdout_line_reader,stderr_line_reader,host,begin_output,end_output)
+               end_output = nil,
+               user = "root")
+      HCluster.ssh_with_host(command,stdout_line_reader,stderr_line_reader,host,begin_output,end_output,user)
     end
 
     #Matches unix "scp" argument conventions:
@@ -1597,18 +1599,17 @@ module Hadoop
       return retval
     end
     
-    def HCluster.until_ssh_able(instances,debug_level = @@debug_level)
+    def HCluster.until_ssh_able(instances,debug_level = @@debug_level, user = "root")
       # do not return until every instance in the instances array is ssh-able.
       # FIXME: make multithreaded: test M (M > 0) instances in M threads until all instances are tested.
-      debug_level = 0
       instances.each {|instance|
         connected = false
         until connected == true
           begin
             if debug_level > 0
-              puts "#{instance.dnsName} trying to ssh.."
+              puts "Trying to ssh to '#{user}@#{instance.dnsName}' with debug_level: #{debug_level}.."
             end
-            ssh_to(instance.dnsName,"true",HCluster::consume_output,HCluster::consume_output,nil,nil)
+            ssh_to(instance.dnsName,"true",HCluster::consume_output,HCluster::consume_output,nil,nil,user)
             if debug_level > 0
               puts "#{instance.dnsName} is sshable."
             end
