@@ -4,5 +4,7 @@ yum -y install puppet
 echo '10.122.49.123 puppet puppet.ec2.foofers.org' | cat >> /etc/hosts
 echo '    runinterval = 10' | cat >> /etc/puppet/puppet.conf
 echo "" | cat >> /etc/puppet.conf
+chgrp wheel /opt
+chmod 775 /opt
 /etc/init.d/puppet start
 
