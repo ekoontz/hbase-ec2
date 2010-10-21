@@ -1459,6 +1459,18 @@ module Hadoop
                        ) do |ssh|
           stdout = ""
           channel = ssh.open_channel do |ch|
+
+            # The following block implements equivalent of the 
+            # ssh commandline "-t" option (force pseudo-tty aquisition).
+            # http://net-ssh.rubyforge.org/ssh/v2/api/classes/Net/SSH/Connection/Channel.html#M000213
+            channel.request_pty do |ch, success|
+              if success
+                puts "pty successfully obtained"
+              else
+                puts "could not obtain pty"
+              end
+            end
+
             channel.exec(command) do |ch, success|
               #FIXME: throw exception(?)
               puts "channel.exec('#{command}') was not successful." unless success
@@ -1532,11 +1544,11 @@ module Hadoop
       HCluster.scp_to(host,local_path,remote_path_without_host)
     end
 
-    def HCluster.scp_to(host,local_path,remote_path)
+    def HCluster.scp_to(host,local_path,remote_path,user="root")
       #http://net-ssh.rubyforge.org/scp/v1/api/classes/Net/SCP.html#M000005
       # paranoid=>false because we should ignore known_hosts, since AWS IPs get frequently recycled
       # and their servers' private keys will vary.
-      Net::SCP.start(host,'root',
+      Net::SCP.start(host,user,
                      :keys => [EC2_ROOT_SSH_KEY],
                      :paranoid => false
                      ) do |scp|
@@ -1661,7 +1673,7 @@ module Hadoop
     
     def HCluster.consume_output 
       #don't print anything for each line.
-      return lambda{|line|
+      return lambda{|line,channel|
       }
     end
     
