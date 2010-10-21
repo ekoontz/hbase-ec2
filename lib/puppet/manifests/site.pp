@@ -16,8 +16,7 @@ class tm {
     source => "puppet://puppet/files/hadoop.sh"
   }
   
-#  exec { "rm -rf /opt/hadoop-common ; tar -C /opt -xzf /opt/hadoop-common.tar.gz":
-    exec { "/opt/hadoop.sh":
+  exec { "/opt/hadoop.sh":
     cwd => "/opt",
     path => ["/bin","/usr/bin","/usr/sbin"],
     subscribe => File["/opt/hadoop-common.tar.gz","/opt/hadoop.sh"],
