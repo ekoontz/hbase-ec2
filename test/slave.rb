@@ -26,11 +26,14 @@ class TestCreateImage < Test::Unit::TestCase
       puts "#{key} => #{@@global_himg.options[key]}\n"
     end
 
-    5.times { |i|
+    puppetmaster_ip = '10.196.242.255'
+
+    2.times { |i|
       launch = HCluster::do_launch({
                                      :ami => @@global_himg.options[:base_image_name],
                                      :key_name => "root",
                                      :instance_type => "m1.large",
+                                     :security_group => "all open",
                                      :on_boot => lambda{|instance|
                                        slave_hostname = instance.dnsName
                                        puts "#{slave_hostname}: verifying that sshing to slave works.."
@@ -38,13 +41,13 @@ class TestCreateImage < Test::Unit::TestCase
                                        puts "..ok."
                                        
                                        puts "copying slave script.."
-                                       HCluster::scp_to(instance.dnsName,"./lib/puppet/slave/slave.sh","/home/ec2-user/slave.sh","ec2-user")
+                                       HCluster::scp_to(instance.dnsName,"./lib/puppet/slave.sh","/home/ec2-user/slave.sh","ec2-user")
                                        puts "..ok."
                                        
                                        puts "run slave setup.."
                                        #run slave setup.
                                        HCluster::ssh_to(slave_hostname,
-                                                        "sudo sh ./slave.sh",
+                                                        "sudo sh ./slave.sh '"+puppetmaster_ip+"'",
                                                         HCluster.echo_stdout,
                                                         HCluster.echo_stderr,
                                                         nil,

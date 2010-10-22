@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+
 rm -rf /opt/hadoop-common
 tar -C /opt -xzf /opt/jre.tar.gz
 tar -C /opt -xzf /opt/hadoop-common.tar.gz
