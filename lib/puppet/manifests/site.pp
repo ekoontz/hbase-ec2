@@ -23,6 +23,13 @@ class tm {
     source => "puppet://puppet/files/hbase.tar.gz"
   }
 
+  file { "/opt/m2.tar.gz":
+    owner => ec2-user,
+    group => ec2-user,
+    mode => 750,
+    ignore => ".git*",
+    source => "puppet://puppet/files/m2.tar.gz"
+  }
   file { "/opt/hadoop.sh":
     owner => ec2-user,
     group => ec2-user,
