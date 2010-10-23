@@ -42,7 +42,7 @@ class tm {
     user => "ec2-user",
     cwd => "/opt",
     path => ["/opt/jre1.6.0_22/bin","/bin","/usr/bin","/usr/sbin"],
-    subscribe => File["/opt/hadoop-common.tar.gz","/opt/hadoop.sh","/opt/jre.tar.gz"],
+    subscribe => File["/opt/base.tar.gz"],
     environment => ["JAVA_HOME=/opt/jre1.6.0_22"],
     refreshonly => true
   }
