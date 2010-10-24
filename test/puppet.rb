@@ -29,23 +29,79 @@ class TestCreateImage < Test::Unit::TestCase
     launch = HCluster::do_launch({
                                    :ami => @@global_himg.options[:base_image_name],
                                    :key_name => "root",
+                                   :security_group => "all open",
                                    :instance_type => "m1.large",
                                    :on_boot => lambda{|instance|
-                                     image_creator_hostname = instance.dnsName
-                                     puts "#{image_creator_hostname}: verifying that sshing works.."
+                                     master_hostname = instance.dnsName
+                                     puts "#{master_hostname}: verifying that sshing works.."
                                      HCluster::until_ssh_able([instance],0,"ec2-user")
                                      puts "..ok."
+                                     HCluster::ssh_to(master_hostname,
+                                                      "wget -O jdk.bin http://ekoontz-tarballs.s3.amazonaws.com/jdk-6u22-linux-x64.bin && sh ./jdk.bin",
+                                                      lambda{|line,channel|
+                                                        if line =~ /Press Enter to continue/
+                                                          channel.send_data "\n"
+                                                        end
+                                                      },
+                                                      HCluster.consume_output,
+                                                      nil,nil,
+                                                      "ec2-user")
+                                     HCluster::scp_to(master_hostname,"./lib/puppet/master.sh","/home/ec2-user/master.sh","ec2-user")
+                                     HCluster::scp_to(master_hostname,"./lib/puppet/zk.sh","/home/ec2-user/zk.sh","ec2-user")
+
+                                     HCluster::ssh_to(master_hostname,"sh /home/ec2-user/master.sh",
+                                                      HCluster.echo_stdout,
+                                                      HCluster.echo_stderr,
+                                                      nil,nil,
+                                                      "ec2-user")
+                                     
                                    }
-                                 },"image-creator")
+                                 },"master")
+
 
     if (launch && launch[0])
-      @image_creator = launch[0]
+      @master = launch[0]
     else
-      raise "Could not launch image creator."
+      raise "Could not launch master."
     end
 
-    assert(true)
-  end
+    assert(@master)
+    
+    #set up slaves.
+    puppetmaster_name = @master.dnsName
 
+    puts "puppetmaster hostname: " + puppetmaster_name
+
+    0.times { |i|
+      launch = HCluster::do_launch({
+                                     :ami => @@global_himg.options[:base_image_name],
+                                     :key_name => "root",
+                                     :instance_type => "m1.large",
+                                     :security_group => "all open",
+                                     :on_boot => lambda{|instance|
+                                       slave_hostname = instance.dnsName
+                                       puts "#{slave_hostname}: verifying that sshing to slave works.."
+                                       HCluster::until_ssh_able([instance],0,"ec2-user")
+                                       puts "..ok."
+                                       
+                                       puts "copying slave script.."
+                                       HCluster::scp_to(instance.dnsName,"./lib/puppet/slave.sh","/home/ec2-user/slave.sh","ec2-user")
+                                       puts "..ok."
+                                       
+                                       puts "run slave setup.."
+                                       #run slave setup.
+                                       HCluster::ssh_to(slave_hostname,
+                                                        "sudo sh ./slave.sh '"+puppetmaster_name+"'",
+                                                        HCluster.echo_stdout,
+                                                        HCluster.echo_stderr,
+                                                        nil,
+                                                        nil,
+                                                        "ec2-user")
+                                       puts "..ok."
+                                     }
+                                   },"start_slave_"+i.to_s)
+      assert(launch[0])     
+    }
+  end
 end
 
