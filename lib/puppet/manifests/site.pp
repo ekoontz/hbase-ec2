@@ -65,14 +65,18 @@ class tm {
     subscribe => File["/opt/hbase.tar.gz"]
   }	 
 
-  file { "/opt/hadoop.sh":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 755,
-    ignore => ".git*",
-    source => "puppet://puppet/files/hadoop.sh"
+  service { "datanode":
+    ensure => true,
+    start => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hadoop-common/bin/hadoop-daemon.sh start datanode >> /tmp/hadoop.err 2>&1",
+    stop  => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hadoop-common/bin/hadoop-daemon.sh stop datanode >> /tmp/hadoop.err 2>&1"
   }
 
+  service { "regionserver":
+    ensure => true,
+    start => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hbase/bin/hbase-daemon.sh start regionserver >> /tmp/hbase.err 2>&1",
+    stop => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hbase/bin/hbase-daemon.sh stop regionserver >> /tmp/hbase.err 2>&1"
+  }
+ 
 }
 
 include tm
