@@ -67,14 +67,14 @@ class tm {
 
   service { "datanode":
     ensure => true,
-    start => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hadoop-common/bin/hadoop-daemon.sh start datanode >> /tmp/hadoop.err 2>&1",
-    stop  => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hadoop-common/bin/hadoop-daemon.sh stop datanode >> /tmp/hadoop.err 2>&1"
+    start => "sudo -u ec2-user /opt/datanode.sh start datanode",
+    stop  => "sudo -u ec2-user /opt/datanode.sh stop datanode",
   }
 
   service { "regionserver":
     ensure => true,
-    start => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hbase/bin/hbase-daemon.sh start regionserver >> /tmp/hbase.err 2>&1",
-    stop => "JAVA_HOME=/opt/jre1.6.0_22 /opt/hbase/bin/hbase-daemon.sh stop regionserver >> /tmp/hbase.err 2>&1"
+    start => "sudo -u ec2-user /opt/regionserver.sh start regionserver",
+    stop => "sudo -u ec2-user /opt/regionserver.sh stop regionserver"
   }
  
 }
