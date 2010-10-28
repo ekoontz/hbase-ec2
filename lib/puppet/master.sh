@@ -60,7 +60,8 @@ tar  --exclude=".git*" -czf /tmp/puppetfiles/hbase.tar.gz hbase
 tar -czf /tmp/puppetfiles/jre.tar.gz jre1.6.0_22
 tar -czf /tmp/puppetfiles/m2.tar.gz .m2
 set +x
-cp ~/hbase-ec2/lib/puppet/hadoop.sh /tmp/puppetfiles
+cp ~/hbase-ec2/lib/puppet/datanode.sh /tmp/puppetfiles
+cp ~/hbase-ec2/lib/puppet/regionserver.sh /tmp/puppetfiles
 
 #start up puppet server
 sudo cp hbase-ec2/lib/puppet/puppet.conf /etc/puppet/
