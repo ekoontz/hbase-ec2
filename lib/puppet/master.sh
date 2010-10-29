@@ -26,9 +26,11 @@ git checkout yahoo-hadoop-0.20.104-append
 ant clean compile
 cat ~/hbase-ec2/lib/puppet/hdfs-site.xml | perl -pe "s/HOSTNAMEF/`hostname -f`/" > /tmp/hdfs-site.xml
 mv /tmp/hdfs-site.xml conf
+cp ~/hbase-ec2/lib/puppet/mapred-site.xml conf
 cd ~/hadoop-common
 bin/hadoop namenode -format
 screen -dmS namenode bin/hadoop namenode
+screen -dmS jobtracker bin/hadoop jobtracker
 
 cd ~
 git clone git://github.com/apache/zookeeper.git
@@ -65,6 +67,7 @@ set +x
 
 #initscript to start slave daemons:
 sudo cp ~/hbase-ec2/lib/initscripts/hadoop-datanode /etc/init.d
+sudo cp ~/hbase-ec2/lib/initscripts/hadoop-tasktracker /etc/init.d
 sudo cp ~/hbase-ec2/lib/initscripts/hbase-regionserver /etc/init.d/
 
 #start up puppet server
