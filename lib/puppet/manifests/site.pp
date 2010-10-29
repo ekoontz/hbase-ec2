@@ -77,6 +77,18 @@ class ec2 {
     pattern => "datanode"
   }
 
+  file { "/etc/init.d/hadoop-tasktracker":
+    mode => 755,
+    source => "puppet://puppet/files/hadoop-tasktracker"
+  }
+  service { "tasktracker":
+    ensure => true,
+    start => "service hadoop-tasktracker start",
+    stop => "service hadoop-tasktracker stop",
+    provider => "init",
+    pattern => "tasktracker"
+  }
+
   file { "/etc/init.d/hbase-regionserver":
     mode => 755,
     source => "puppet://puppet/files/hbase-regionserver"
