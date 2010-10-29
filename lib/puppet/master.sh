@@ -62,6 +62,7 @@ tar  --exclude=".git*" -czf /tmp/puppetfiles/hbase.tar.gz hbase
 tar -czf /tmp/puppetfiles/jre.tar.gz jre1.6.0_22
 tar -czf /tmp/puppetfiles/m2.tar.gz .m2
 cp ~/hbase-ec2/lib/initscripts/hadoop-datanode /tmp/puppetfiles
+cp ~/hbase-ec2/lib/initscripts/hadoop-tasktracker /tmp/puppetfiles
 cp ~/hbase-ec2/lib/initscripts/hbase-regionserver /tmp/puppetfiles
 set +x
 
