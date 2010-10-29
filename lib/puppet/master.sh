@@ -37,7 +37,7 @@ ant clean compile
 cat ~/hbase-ec2/lib/puppet/zoo.cfg | perl -pe "s/HOSTNAMEF/`hostname -i`/" > /tmp/zoo.cfg
 cp /tmp/zoo.cfg conf
 mkdir -p ~/zkdata
-screen -dmS zk ~/zk.sh
+screen -dmS zk ~/hbase-ec2/lib/puppet/zk.sh
 
 cd ~
 git clone git://github.com/trendmicro/hbase.git 
