@@ -3,7 +3,7 @@
 <configuration>
   <property>
     <name>hbase.rootdir</name>
-    <value>hdfs://HOSTNAMEF/hbase</value>
+    <value>hdfs://puppet/hbase</value>
   </property>
   <property>
     <name>hbase.zookeeper.quorum</name>

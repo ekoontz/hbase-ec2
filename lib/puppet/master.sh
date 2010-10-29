@@ -34,7 +34,7 @@ cd ~
 git clone git://github.com/apache/zookeeper.git
 cd zookeeper
 ant clean compile
-cat ~/hbase-ec2/lib/puppet/zoo.cfg | perl -pe "s/HOSTNAMEF/`hostname -f`/" > /tmp/zoo.cfg
+cat ~/hbase-ec2/lib/puppet/zoo.cfg | perl -pe "s/HOSTNAMEF/`hostname -i`/" > /tmp/zoo.cfg
 cp /tmp/zoo.cfg conf
 mkdir -p ~/zkdata
 screen -dmS zk ~/zk.sh
@@ -44,7 +44,7 @@ git clone git://github.com/trendmicro/hbase.git
 cd hbase
 git checkout security
 mvn clean dependency:build-classpath compile
-cat ~/hbase-ec2/lib/puppet/hbase-site.xml | perl -pe "s/HOSTNAMEF/`hostname -f`/" > /tmp/hbase-site.xml
+cat ~/hbase-ec2/lib/puppet/hbase-site.xml | perl -pe "s/HOSTNAMEF/`hostname -i`/" > /tmp/hbase-site.xml
 cp /tmp/hbase-site.xml conf
 screen -dmS master bin/hbase master start
 
