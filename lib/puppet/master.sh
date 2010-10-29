@@ -63,6 +63,7 @@ set +x
 
 #initscript to start slave daemons:
 sudo cp ~/hbase-ec2/lib/initscripts/hadoop-datanode /etc/init.d
+sudo cp ~/hbase-ec2/lib/initscripts/hbase-regionserver /etc/init.d/
 
 #start up puppet server
 sudo cp hbase-ec2/lib/puppet/puppet.conf /etc/puppet/
