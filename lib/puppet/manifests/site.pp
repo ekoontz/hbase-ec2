@@ -57,22 +57,6 @@ class tm {
     source => "puppet://puppet/files/hbase.tar.gz"
   }
 
-  file { "/opt/datanode.sh":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/datanode.sh"
-  }
-
-  file { "/opt/regionserver.sh":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 750,
-    source => "puppet://puppet/files/regionserver.sh"
-  }
-
-
   exec { "tar -xzf /opt/hbase.tar.gz":
     cwd => "/opt",
     creates => "/opt/hbase",
