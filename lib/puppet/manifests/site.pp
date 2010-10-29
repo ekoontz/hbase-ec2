@@ -1,4 +1,4 @@
-class tm {
+class ec2 {
 
   file { "/opt/jre.tar.gz":
     owner => ec2-user,
@@ -72,8 +72,17 @@ class tm {
     provider => "init",
     pattern => "datanode"
   }
+
+  service { "regionserver":
+    ensure => true,
+    start => "service hbase-regionserver start",
+    stop => "service hbase-regionserver stop",
+    provider => "init",
+    pattern => "regionserver"
+  }
  
 }
 
-include tm
+include ec2
+
 
