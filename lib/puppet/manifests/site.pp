@@ -65,6 +65,10 @@ class ec2 {
     subscribe => File["/opt/hbase.tar.gz"]
   }	 
 
+  file { "/etc/init.d/hadoop-datanode":
+    mode => 755,
+    source => "puppet://puppet/files/hadoop-datanode"
+  }
   service { "datanode":
     ensure => true,
     start => "service hadoop-datanode start",
@@ -73,6 +77,10 @@ class ec2 {
     pattern => "datanode"
   }
 
+  file { "/etc/init.d/hbase-regionserver":
+    mode => 755,
+    source => "puppet://puppet/files/hbase-regionserver"
+  }
   service { "regionserver":
     ensure => true,
     start => "service hbase-regionserver start",
