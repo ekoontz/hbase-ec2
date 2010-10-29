@@ -83,14 +83,10 @@ class tm {
 
   service { "datanode":
     ensure => true,
-    start => "sudo -u ec2-user /opt/datanode.sh start datanode",
-    stop  => "sudo -u ec2-user /opt/datanode.sh stop datanode",
-  }
-
-  service { "regionserver":
-    ensure => true,
-    start => "sudo -u ec2-user /opt/regionserver.sh start regionserver",
-    stop => "sudo -u ec2-user /opt/regionserver.sh stop regionserver"
+    start => "service hadoop-datanode start",
+    stop => "service hadoop-datanode stop",
+    provider => "init",
+    pattern => "datanode"
   }
  
 }

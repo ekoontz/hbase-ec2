@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# hadoop-datanode
+#
+# Author:       Eugene Koontz <ekoontz@hiro-tan.org>
+#
+# Description:  Hadoop Datanode Daemon
+#               Intended to work well with Puppet and Amazon EC2: 
+#               see: 
+#                 http://github.com/ekoontz/hbase-ec2/blob/puppet/lib/puppet/manifests/site.pp
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+#fixme: use system env.
+export JAVA_HOME=/opt/jre1.6.0_22
+export PATH=$JAVA_HOME/bin:$PATH
+export HADOOP_USER=ec2-user
+
+start() {
+	daemon --user=$HADOOP_USER '/opt/hadoop-common/bin/hadoop-daemon.sh start datanode'
+	RETVAL=$?
+	echo
+}
+
+stop() {
+	daemon --user=$HADOOP_USER '/opt/hadoop-common/bin/hadoop-daemon.sh stop datanode'
+	echo
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop) 
+	stop
+	;;
+  restart|force-reload|reload)
+	restart
+	;;
+  condrestart|try-restart)
+	[ -f /var/lock/subsys/yum-updatesd ] && restart
+	;;
+  status)
+#	status yumupdated
+	RETVAL=0
+	if [ -f /tmp/hadoop_daemon_running ]; then
+	    RETVAL = 1
+	fi
+
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+	exit 1
+esac
+
+exit $RETVAL
