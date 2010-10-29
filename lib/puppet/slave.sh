@@ -1,4 +1,5 @@
 #!/bin/sh
+#note that this script must run as root (run it with 'sudo sh ./slave.sh').
 PUPPET_MASTER_IP=$1
 rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
 yum -y install puppet 
