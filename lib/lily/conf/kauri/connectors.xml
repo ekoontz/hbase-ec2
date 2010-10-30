@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<connectors>
+  <!--
+     | Configuration of the HTTP connector that serves the REST interface.
+     -->
+  <!--
+    About port numbers: the below will try to use port 8888, if it is not available, it will use
+    the next port available.
+    This configuration is useful during development to be able to start multiple Lily nodes
+    on one host, without port conflicts, and without resorting to arbitrary ephemeral port numbers.
+    To use a fixed port, remove the suggestedPort attribute and set the port to the desired value.
+  -->
+  <serverConnector protocols="HTTP" port="0" suggestedPort="8888" suggestedPortAlt="sequential">
+    <!--
+      The full list of parameters that can be used here can be found in the Javadoc
+      of the class org.restlet.ext.jetty.HttpServerHelper and its parent class.
+    -->
+
+    <!--
+      The type of Jetty connector to use.
+        1 : Selecting NIO connector (Jetty's SelectChannelConnector class).
+        2 : Blocking NIO connector (Jetty's BlockingChannelConnector class).
+        3 : Blocking BIO connector (Jetty's SocketConnector class).
+    -->
+    <!--
+        This was changed to 3 because of the problem described in #107
+    -->
+    <parameter name="type">3</parameter>
+  </serverConnector>
+
+  <clientConnector protocols="HTTP"/>
+  <clientConnector protocols="FILE"/>
+  <clientConnector protocols="CLAP"/>
+</connectors>

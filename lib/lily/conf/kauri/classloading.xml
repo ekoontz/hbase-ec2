@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<classLoading>
+  <required on-conflict="highest"/>
+  <allowed on-conflict="highest"/>
+</classLoading>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<zooKeeper xmlns:conf="http://kauriproject.org/configuration"
+       conf:inherit="shallow">
+
+  <!--
+     | Configuration of the ZooKeeper instance used by Lily. This can be a
+     | different one than the one used by HBase.
+     -->
+
+  <!--
+    Comma separated list of servers in the ZooKeeper ensemble.
+    For example, "host1.mydomain.com:2181,host2.mydomain.com:2181,host3.mydomain.com:2181".
+  -->
+  <connectString>puppet:2181</connectString>
+
+  <!-- The ZooKeeper session timeout -->
+  <sessionTimeout>20000</sessionTimeout>
+
+</zooKeeper>
