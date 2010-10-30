@@ -17,7 +17,7 @@ class TestCreateImage < Test::Unit::TestCase
     assert(@@global_himg.options)
 
     #required options:
-    # for now, require a specific AMI: (Amazon-branded Ubuntu 10).
+    # for now, require a specific AMI: (Amazon-branded CentOS 5 variant).
     assert(@@global_himg.options[:base_image_name] == "ami-38c33651")
     assert(@@global_himg.options[:hbase_roles])
     assert(@@global_himg.options[:base_image_name])
@@ -47,7 +47,14 @@ class TestCreateImage < Test::Unit::TestCase
                                                       nil,nil,
                                                       "ec2-user")
                                      HCluster::scp_to(master_hostname,"./lib/puppet/master.sh","/home/ec2-user/master.sh","ec2-user")
-                                     HCluster::scp_to(master_hostname,"./lib/puppet/zk.sh","/home/ec2-user/zk.sh","ec2-user")
+
+                                     sync_with_dev = false
+                                     if (sync_with_dev == true)
+                                       #copy various files from our dev directory directly to the puppetmaster.
+                                       HCluster::scp_to(master_hostname,"./lib/puppet/zk.sh","/home/ec2-user/zk.sh","ec2-user")
+                                       HCluster::scp_to(master_hostname,"./lib/puppet/manifests/site.pp","/home/ec2-user/hbase-ec2/lib/puppet","ec2-user")
+                                       #other files to scp....
+                                     end
 
                                      HCluster::ssh_to(master_hostname,"sh /home/ec2-user/master.sh",
                                                       HCluster.echo_stdout,
@@ -55,6 +62,8 @@ class TestCreateImage < Test::Unit::TestCase
                                                       nil,nil,
                                                       "ec2-user")
                                      
+                                     #check to make sure puppetmaster (and puppet) are running on master host.
+
                                    }
                                  },"master")
 
@@ -68,11 +77,9 @@ class TestCreateImage < Test::Unit::TestCase
     assert(@master)
     
     #set up slaves.
-    puppetmaster_name = @master.dnsName
+    puppetmaster_private_ip = @master.privateIpAddress
 
-    puts "puppetmaster hostname: " + puppetmaster_name
-
-    0.times { |i|
+    2.times { |i|
       launch = HCluster::do_launch({
                                      :ami => @@global_himg.options[:base_image_name],
                                      :key_name => "root",
@@ -91,7 +98,7 @@ class TestCreateImage < Test::Unit::TestCase
                                        puts "run slave setup.."
                                        #run slave setup.
                                        HCluster::ssh_to(slave_hostname,
-                                                        "sudo sh ./slave.sh '"+puppetmaster_name+"'",
+                                                        "sudo sh ./slave.sh '"+puppetmaster_private_ip+"'",
                                                         HCluster.echo_stdout,
                                                         HCluster.echo_stderr,
                                                         nil,
@@ -102,6 +109,10 @@ class TestCreateImage < Test::Unit::TestCase
                                    },"start_slave_"+i.to_s)
       assert(launch[0])     
     }
+
+    #wait for hbase to come up, and run some hadoop and hbase tests.
+    
+
   end
 end
 
