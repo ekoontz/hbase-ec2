@@ -399,6 +399,112 @@ module Hadoop
   
   class HCluster < AWS::EC2::Base
 
+    # launchp: launch with puppet (eventually will just be launch once old function is removed).
+    def launchp( options = {} )
+      #set up a puppet master with specified number of slaves (default=2).
+
+      #order of precedence is : supplied method options > this object's options > defaults (as specified below)
+      options = {
+        :slaves => 2
+      }.merge(self.options).merge(options)
+
+      #Note: although 2 slaves are specified, in reality there will 
+      # be 3 slaves since the master will also run slave.sh on itself.
+      master = HCluster::do_launch({
+                                      :ami => options[:ami],
+                                      :key_name => "root",
+                                      :security_group => "all open",
+                                      :instance_type => "m1.large",
+                                      :on_boot => lambda{|instance|
+                                        master_hostname = instance.dnsName
+                                        puts "#{master_hostname}: verifying that sshing works.."
+                                        HCluster::until_ssh_able([instance],0,"ec2-user")
+                                        puts "..ok."
+                                        HCluster::ssh_to(master_hostname,
+                                                         "wget -O jdk.bin http://ekoontz-tarballs.s3.amazonaws.com/jdk-6u22-linux-x64.bin && sh ./jdk.bin",
+                                                         lambda{|line,channel|
+                                                           if line =~ /Press Enter to continue/
+                                                             channel.send_data "\n"
+                                                           end
+                                                         },
+                                                         HCluster.consume_output,
+                                                         nil,nil,
+                                                         "ec2-user")
+                                        HCluster::scp_to(master_hostname,"./lib/puppet/master.sh","/home/ec2-user/master.sh","ec2-user")
+                                        
+                                        sync_with_dev = false
+                                        if (sync_with_dev == true)
+                                          #copy various files from our dev directory directly to the puppetmaster.
+                                          HCluster::scp_to(master_hostname,"./lib/puppet/zk.sh","/home/ec2-user/zk.sh","ec2-user")
+                                          HCluster::scp_to(master_hostname,"./lib/puppet/manifests/site.pp","/home/ec2-user/hbase-ec2/lib/puppet","ec2-user")
+                                          #other files to scp....
+                                        end
+                                        
+                                        HCluster::ssh_to(master_hostname,"sh /home/ec2-user/master.sh",
+                                                         HCluster.echo_stdout,
+                                                         HCluster.echo_stderr,
+                                                         nil,nil,
+                                                         "ec2-user")
+                                        
+                                        #check to make sure puppetmaster (and puppet) are running on master host.
+                                        
+                                      }
+                                    },"master")
+      
+      
+      if (master && master[0])
+        @master = master[0]
+        @save_master = master[0]
+      else
+        raise "Could not launch master."
+      end
+
+
+
+      @slaves = []
+      puppetmaster_private_ip = @master.privateIpAddress
+
+      #start up desired number of slaves.
+      options[:slaves].times { |i|
+        launch = HCluster::do_launch({
+                                       :ami => options[:ami],
+                                       :key_name => "root",
+                                       :instance_type => "m1.large",
+                                       :security_group => "all open",
+                                       :on_boot => lambda{|instance|
+                                         slave_hostname = instance.dnsName
+                                         puts "#{slave_hostname}: verifying that sshing to slave works.."
+                                         HCluster::until_ssh_able([instance],0,"ec2-user")
+                                         puts "..ok."
+                                         
+                                         puts "copying slave script.."
+                                         HCluster::scp_to(instance.dnsName,"./lib/puppet/slave.sh","/home/ec2-user/slave.sh","ec2-user")
+                                         puts "..ok."
+                                         
+                                         puts "run slave setup.."
+                                         #run slave setup.
+                                         HCluster::ssh_to(slave_hostname,
+                                                          "sudo sh ./slave.sh '"+puppetmaster_private_ip+"'",
+                                                          HCluster.echo_stdout,
+                                                          HCluster.echo_stderr,
+                                                          nil,
+                                                          nil,
+                                                          "ec2-user")
+                                         puts "..ok."
+                                         @slaves.push instance
+                                       }
+                                     },"start_slave_"+i.to_s)
+      }
+
+
+    end
+
+    def aquire(hostname)
+      #create an instance hash object and populate from host
+      #with the given hostname
+    end
+
+
     def trim(string = "")
       string.gsub(/^\s+/,'').gsub(/\s+$/,'')
     end
@@ -499,7 +605,6 @@ module Hadoop
       if options[:owner_id]
         @ami_owner_id = options[:owner_id]
       end
-
       #backwards compatibility
       #use :ami, not :image_id, in the future.
       if options[:image_id]
@@ -1526,6 +1631,23 @@ module Hadoop
                end_output = nil,
                user = "root")
       HCluster.ssh_with_host(command,stdout_line_reader,stderr_line_reader,host,begin_output,end_output,user)
+    end
+
+    def ssh2(command, options = {})
+      #slimmed-down ssh_to().
+      options = {
+        :user => "root",
+        :host => @master.dnsName,
+        :stdout_line_reader => HCluster.echo_stdout,
+        :stderr_line_reader => HCluster.echo_stderr,
+        :begin_output => nil,
+        :end_output => nil
+      }.merge(options)
+      HCluster.ssh_with_host(command,
+                             options[:stdout_line_reader],options[:stderr_line_reader],
+                             options[:host],
+                             options[:begin_output],options[:end_output],
+                             options[:user])
     end
 
     #Matches unix "scp" argument conventions:
