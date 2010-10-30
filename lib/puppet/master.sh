@@ -51,6 +51,17 @@ cp /tmp/hbase-site.xml conf
 screen -dmS master bin/hbase master start
 
 cd ~
+git clone http://github.com/apache/solr.git
+git checkout release-1.4.1
+cd solr
+ant clean compile
+cd solr/example
+mkdir -p logs
+mkdir -p webapps
+wget -O webapps/solr.war "http://ekoontz-tarballs.s3.amazonaws.com/solr.war"
+screen -dmS solr java -example.jar
+
+cd ~
 wget -O jre.bin "http://ekoontz-tarballs.s3.amazonaws.com/jre-6u22-linux-x64.bin"
 sh ./jre.bin
 
