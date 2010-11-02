@@ -3,11 +3,11 @@
 <configuration>
   <property>
     <name>hbase.rootdir</name>
-    <value>hdfs://puppet/hbase</value>
+    <value>hdfs://namenode/hbase</value>
   </property>
   <property>
     <name>hbase.zookeeper.quorum</name>
-    <value>HOSTNAMEF</value>
+    <value>zookeeper</value>
   </property>
   <property>
     <name>hbase.cluster.distributed</name>

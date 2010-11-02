@@ -2,11 +2,18 @@
 
 cd ~
 
+wget http://ekoontz-tarballs.s3.amazonaws.com/jdk1.6.0_22.tar.gz
+tar xfz jdk1.6.0_22.tar.gz
+
+wget http://ekoontz-tarballs.s3.amazonaws.com/ant/binaries/apache-ant-1.8.1-bin.tar.bz2
+tar xfz apache-ant-1.8.1-bin.tar.gz
+
 export JAVA_HOME=`pwd`/jdk1.6.0_22
-export PATH=$JAVA_HOME:$PATH
+export PATH=$JAVA_HOME/bin:`pwd`/apache-ant-1.8.1-bin:$PATH
+export PATH=`pwd`/apache-maven-3.0/bin:$JAVA_HOME:$PATH
 
 sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
-sudo yum -y install puppet-server screen git ant emacs telnet
+sudo yum -y install puppet-server screen git emacs telnet
 
 wget http://ekoontz-tarballs.s3.amazonaws.com/apache-maven-3.0-bin.tar.gz
 tar xfz apache-maven-3.0-bin.tar.gz
@@ -17,15 +24,14 @@ tar xfz m2.tar.gz
 
 git clone git://github.com/ekoontz/hbase-ec2.git
 cd hbase-ec2
-git checkout puppet
+git checkout origin/puppet
 
 cd ~
 git clone git://github.com/trendmicro/hadoop-common.git
-cd ~/hadoop-common
+cd hadoop-common
 git checkout yahoo-hadoop-0.20.104-append
 ant clean compile
-cat ~/hbase-ec2/lib/puppet/hdfs-site.xml | perl -pe "s/HOSTNAMEF/`hostname -f`/" > /tmp/hdfs-site.xml
-mv /tmp/hdfs-site.xml conf
+cp ~/hbase-ec2/lib/puppet/hdfs-site.xml conf
 cp ~/hbase-ec2/lib/puppet/mapred-site.xml conf
 cd ~/hadoop-common
 bin/hadoop namenode -format
@@ -36,22 +42,17 @@ cd ~
 git clone git://github.com/apache/zookeeper.git
 cd zookeeper
 ant clean compile
-cat ~/hbase-ec2/lib/puppet/zoo.cfg | perl -pe "s/HOSTNAMEF/`hostname -i`/" > /tmp/zoo.cfg
-cp /tmp/zoo.cfg conf
-mkdir -p ~/zkdata
-screen -dmS zk ~/hbase-ec2/lib/puppet/zk.sh
+cp ~/hbase-ec2/lib/puppet/zoo.cfg conf
 
 cd ~
 git clone git://github.com/trendmicro/hbase.git 
 cd hbase
 git checkout security
 mvn clean dependency:build-classpath compile
-cat ~/hbase-ec2/lib/puppet/hbase-site.xml | perl -pe "s/HOSTNAMEF/`hostname -i`/" > /tmp/hbase-site.xml
-cp /tmp/hbase-site.xml conf
-screen -dmS master bin/hbase master start
+cp ~/hbase-ec2/lib/puppet/hbase-site.xml conf
 
 cd ~
-git clone http://github.com/apache/solr.git
+git clone git://github.com/apache/solr.git
 git checkout release-1.4.1
 cd solr
 ant clean compile

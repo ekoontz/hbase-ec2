@@ -10,6 +10,6 @@
   </property>
   <property>
     <name>fs.default.name</name>
-    <value>hdfs://HOSTNAMEF</value>
+    <value>hdfs://namenode</value>
   </property>
 </configuration>

@@ -3,7 +3,7 @@
 <configuration>
   <property>
     <name>mapred.job.tracker</name>
-    <value>puppet:8021</value>
+    <value>jobtracker:8021</value>
   </property>
 </configuration>
 
