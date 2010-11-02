@@ -1,15 +1,15 @@
 #!/bin/sh
-
+set -x
 cd ~
 
 wget http://ekoontz-tarballs.s3.amazonaws.com/jdk1.6.0_22.tar.gz
 tar xfz jdk1.6.0_22.tar.gz
 
-wget http://ekoontz-tarballs.s3.amazonaws.com/ant/binaries/apache-ant-1.8.1-bin.tar.bz2
-tar xfz apache-ant-1.8.1-bin.tar.gz
+wget http://ekoontz-tarballs.s3.amazonaws.com/apache-ant-1.8.1-bin.tar.bz2
+tar xfj apache-ant-1.8.1-bin.tar.bz2
 
 export JAVA_HOME=`pwd`/jdk1.6.0_22
-export PATH=$JAVA_HOME/bin:`pwd`/apache-ant-1.8.1-bin:$PATH
+export PATH=$JAVA_HOME/bin:`pwd`/apache-ant-1.8.1/bin:$PATH
 export PATH=`pwd`/apache-maven-3.0/bin:$JAVA_HOME:$PATH
 
 sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
@@ -35,8 +35,6 @@ cp ~/hbase-ec2/lib/puppet/hdfs-site.xml conf
 cp ~/hbase-ec2/lib/puppet/mapred-site.xml conf
 cd ~/hadoop-common
 bin/hadoop namenode -format
-screen -dmS namenode bin/hadoop namenode
-screen -dmS jobtracker bin/hadoop jobtracker
 
 cd ~
 git clone git://github.com/apache/zookeeper.git
@@ -60,7 +58,6 @@ cd solr/example
 mkdir -p logs
 mkdir -p webapps
 wget -O webapps/solr.war "http://ekoontz-tarballs.s3.amazonaws.com/solr.war"
-screen -dmS solr java -example.jar
 
 cd ~
 wget -O jre.bin "http://ekoontz-tarballs.s3.amazonaws.com/jre-6u22-linux-x64.bin"
@@ -68,20 +65,13 @@ sh ./jre.bin
 
 cd ~
 mkdir -p /tmp/puppetfiles
-set -x
+
 tar  --exclude=".git*" -czf /tmp/puppetfiles/hadoop-common.tar.gz hadoop-common
 tar  --exclude=".git*" -czf /tmp/puppetfiles/hbase.tar.gz hbase
 tar -czf /tmp/puppetfiles/jre.tar.gz jre1.6.0_22
 tar -czf /tmp/puppetfiles/m2.tar.gz .m2
-cp ~/hbase-ec2/lib/initscripts/hadoop-datanode /tmp/puppetfiles
-cp ~/hbase-ec2/lib/initscripts/hadoop-tasktracker /tmp/puppetfiles
-cp ~/hbase-ec2/lib/initscripts/hbase-regionserver /tmp/puppetfiles
-set +x
-
-#initscript to start slave daemons:
-sudo cp ~/hbase-ec2/lib/initscripts/hadoop-datanode /etc/init.d
-sudo cp ~/hbase-ec2/lib/initscripts/hadoop-tasktracker /etc/init.d
-sudo cp ~/hbase-ec2/lib/initscripts/hbase-regionserver /etc/init.d/
+tar -czf /tmp/puppetfiles/zookeeper.tar.gz zookeeper
+cp ~/hbase-ec2/lib/initscripts/* /tmp/puppetfiles
 
 #start up puppet server
 sudo cp hbase-ec2/lib/puppet/puppet.conf /etc/puppet/
