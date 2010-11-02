@@ -9,9 +9,6 @@
 #               see: 
 #                 http://github.com/ekoontz/hbase-ec2/blob/puppet/lib/puppet/manifests/site.pp
 
-# source function library
-. /etc/rc.d/init.d/functions
-
 RETVAL=0
 #fixme: use system env.
 export JAVA_HOME=/opt/jre1.6.0_22
@@ -19,13 +16,13 @@ export PATH=$JAVA_HOME/bin:$PATH
 export HADOOP_USER=ec2-user
 
 start() {
-	daemon --user=$HADOOP_USER '/opt/hadoop-common/bin/hadoop-daemon.sh start datanode'
+	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh start datanode 
 	RETVAL=$?
 	echo
 }
 
 stop() {
-	daemon --user=$HADOOP_USER '/opt/hadoop-common/bin/hadoop-daemon.sh stop datanode'
+	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh stop datanode 
 	echo
 }
 

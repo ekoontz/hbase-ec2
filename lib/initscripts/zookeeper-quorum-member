@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# hadoop-tasktracker
+# hadoop-namenode
 #
 # Author:       Eugene Koontz <ekoontz@hiro-tan.org>
 #
-# Description:  Hadoop Tasktracker Daemon
+# Description:  Hadoop Namenode Daemon
 #               Intended to work well with Puppet and Amazon EC2: 
 #               see: 
 #                 http://github.com/ekoontz/hbase-ec2/blob/puppet/lib/puppet/manifests/site.pp
@@ -13,16 +13,16 @@ RETVAL=0
 #fixme: use system env.
 export JAVA_HOME=/opt/jre1.6.0_22
 export PATH=$JAVA_HOME/bin:$PATH
-export HADOOP_USER=ec2-user
+export ZOOKEEPER_USER=ec2-user
 
 start() {
-	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh start tasktracker 
+        sudo -u $ZOOKEEPER_USER JAVA_HOME=$JAVA_HOME PATH=$JAVA_HOME/bin:$PATH /opt/zookeeper/bin/zkServer.sh start
 	RETVAL=$?
 	echo
 }
 
 stop() {
-	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh stop tasktracker 
+        sudo -u $ZOOKEEPER_USER JAVA_HOME=$JAVA_HOME /opt/zookeeper/bin/zkServer.sh stop
 	echo
 }
 

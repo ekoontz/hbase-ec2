@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# hadoop-tasktracker
+# hbase-master
 #
 # Author:       Eugene Koontz <ekoontz@hiro-tan.org>
 #
-# Description:  Hadoop Tasktracker Daemon
+# Description:  Hbase Master Daemon
 #               Intended to work well with Puppet and Amazon EC2: 
 #               see: 
 #                 http://github.com/ekoontz/hbase-ec2/blob/puppet/lib/puppet/manifests/site.pp
@@ -13,16 +13,17 @@ RETVAL=0
 #fixme: use system env.
 export JAVA_HOME=/opt/jre1.6.0_22
 export PATH=$JAVA_HOME/bin:$PATH
-export HADOOP_USER=ec2-user
+export HBASE_USER=ec2-user
 
+set -x
 start() {
-	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh start tasktracker 
+	sudo -u $HBASE_USER JAVA_HOME=$JAVA_HOME /opt/hbase/bin/hbase-daemon.sh start master
 	RETVAL=$?
 	echo
 }
 
 stop() {
-	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh stop tasktracker 
+	sudo -u $HBASE_USER JAVA_HOME=$JAVA_HOME /opt/hbase/bin/hbase-daemon.sh stop master
 	echo
 }
 
@@ -38,7 +39,7 @@ case "$1" in
   stop) 
 	stop
 	;;
-  restart|force-reload|reload)
+  restart)
 	restart
 	;;
   *)
