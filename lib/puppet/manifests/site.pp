@@ -1,88 +1,85 @@
-class ec2 {
+file { "/etc/hosts":
+  owner => root,
+  group => root,
+  mode => 644,
+  source => "puppet://puppet/files/hosts"
+}
+file { "/opt":
+  owner => ec2-user
+}
+file { "/opt/jre.tar.gz":
+  owner => ec2-user,
+  group => ec2-user,
+  mode => 755,
+  ignore => ".git*",
+  source => "puppet://puppet/files/jre.tar.gz"
+}
+file { "/opt/hadoop-common.tar.gz":
+  owner => ec2-user,
+  group => ec2-user,
+  mode => 750,
+  ignore => ".git*",
+  source => "puppet://puppet/files/hadoop-common.tar.gz"
+}
 
-  file { "/etc/hosts":
-    owner => root,
-    group => root,
-    mode => 644,
-    source => "puppet://puppet/files/hosts"
-  }
-  file { "/opt":
-    owner => ec2-user
-  }
-  file { "/opt/jre.tar.gz":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 755,
-    ignore => ".git*",
-    source => "puppet://puppet/files/jre.tar.gz"
-  }
-  file { "/opt/hadoop-common.tar.gz":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/hadoop-common.tar.gz"
-  }
+exec { "tar -xzf /opt/jre.tar.gz":
+  user => "ec2-user",
+  group => "ec2-user",
+  cwd => "/opt",
+  creates => "/opt/jre1.6.0_22",
+  path => ["/bin","/usr/bin"],
+  onlyif => "test -f /opt/jre.tar.gz", 
+  subscribe => File["/opt/jre.tar.gz"]
+}	 
+exec { "tar -xzf /opt/hadoop-common.tar.gz":
+  user => ec2-user,
+  group => ec2-user,
+  cwd => "/opt",
+  creates => "/opt/hadoop-common",
+  path => ["/bin","/usr/bin"],
+  onlyif => "test -f /opt/hadoop-common.tar.gz", 
+  subscribe => File["/opt/hadoop-common.tar.gz"] 
+}	 
 
-  exec { "tar -xzf /opt/jre.tar.gz":
-    user => "ec2-user",
-    group => "ec2-user",
-    cwd => "/opt",
-    creates => "/opt/jre1.6.0_22",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/jre.tar.gz", 
-    subscribe => File["/opt/jre.tar.gz"]
-  }	 
-  exec { "tar -xzf /opt/hadoop-common.tar.gz":
-    user => ec2-user,
-    group => ec2-user,
-    cwd => "/opt",
-    creates => "/opt/hadoop-common",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/hadoop-common.tar.gz", 
-    subscribe => File["/opt/hadoop-common.tar.gz"] 
-  }	 
-
-  file { "/opt/m2.tar.gz":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/m2.tar.gz"
-  }
-  exec { "tar -xzf /opt/m2.tar.gz":
-    user => "ec2-user",
-    group => "ec2-user",
-    cwd => "/home/ec2-user",
-    creates => "/home/ec2-user/.m2",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/m2.tar.gz", 
-    subscribe => File["/opt/m2.tar.gz"]
-  }	 
-  file { "/opt/hbase.tar.gz":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/hbase.tar.gz"
-  }
-  exec { "tar -xzf /opt/hbase.tar.gz":
-    user => ec2-user,
-    group => ec2-user,
-    cwd => "/opt",
-    creates => "/opt/hbase",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/hbase.tar.gz", 
-    subscribe => File["/opt/hbase.tar.gz"]
-  }	 
-  file { "/opt/hadoop-common/logs":
-    mode => 755,
-    owner => ec2-user
-  }
-  file { "/opt/hbase/logs":
-    mode => 755,
-    owner => ec2-user
-  }
+file { "/opt/m2.tar.gz":
+  owner => ec2-user,
+  group => ec2-user,
+  mode => 750,
+  ignore => ".git*",
+  source => "puppet://puppet/files/m2.tar.gz"
+}
+exec { "tar -xzf /opt/m2.tar.gz":
+  user => "ec2-user",
+  group => "ec2-user",
+  cwd => "/home/ec2-user",
+  creates => "/home/ec2-user/.m2",
+  path => ["/bin","/usr/bin"],
+  onlyif => "test -f /opt/m2.tar.gz", 
+  subscribe => File["/opt/m2.tar.gz"]
+}	 
+file { "/opt/hbase.tar.gz":
+  owner => ec2-user,
+  group => ec2-user,
+  mode => 750,
+  ignore => ".git*",
+  source => "puppet://puppet/files/hbase.tar.gz"
+}
+exec { "tar -xzf /opt/hbase.tar.gz":
+  user => ec2-user,
+  group => ec2-user,
+  cwd => "/opt",
+  creates => "/opt/hbase",
+  path => ["/bin","/usr/bin"],
+  onlyif => "test -f /opt/hbase.tar.gz", 
+  subscribe => File["/opt/hbase.tar.gz"]
+}	 
+file { "/opt/hadoop-common/logs":
+  mode => 755,
+  owner => ec2-user
+}
+file { "/opt/hbase/logs":
+  mode => 755,
+  owner => ec2-user
 }
 
 class zookeeper {
@@ -113,11 +110,7 @@ class zookeeper {
     source => "puppet://puppet/files/zookeeper-quorum-member"
   }
   service { "zookeeper-quorum-member":
-    ensure => true,
-    start => "service zookeeper-quorum-member start",
-    stop => "service zookeeper-quorum-member stop",
-    provider => "init",
-    pattern => "zookeeper"
+    ensure => true
   }
 }
 
@@ -126,12 +119,8 @@ class datanode {
     mode => 755,
     source => "puppet://puppet/files/hadoop-datanode"
   }
-  service { "datanode":
-    ensure => true,
-    start => "service hadoop-datanode start",
-    stop => "service hadoop-datanode stop",
-    provider => "init",
-    pattern => "datanode"
+  service { "hadoop-datanode":
+    ensure => true
   }
 }
 
@@ -140,12 +129,8 @@ class tasktracker {
     mode => 755,
     source => "puppet://puppet/files/hadoop-tasktracker"
   }
-  service { "tasktracker":
-    ensure => true,
-    start => "service hadoop-tasktracker start",
-    stop => "service hadoop-tasktracker stop",
-    provider => "init",
-    pattern => "tasktracker"
+  service { "hadoop-tasktracker":
+    ensure => true
   }
 }
 
@@ -154,26 +139,23 @@ class jobtracker {
     mode => 755,
     source => "puppet://puppet/files/hadoop-jobtracker"
   }
-  service { "jobtracker":
-    ensure => true,
-    start => "service hadoop-jobtracker start",
-    stop => "service hadoop-jobtracker stop",
-    provider => "init",
-    pattern => "jobtracker"
+  service { "hadoop-jobtracker":
+    ensure => true
   }
 }
 
 class namenode {
+  exec { "/opt/hadoop-common/hadoop namenode -format":
+      user => ec2-user,
+      group => ec2-user,
+      creates => "/tmp/hadoop-ec2-user"
+  }
   file { "/etc/init.d/hadoop-namenode":
     mode => 755,
     source => "puppet://puppet/files/hadoop-namenode"
   }
-  service { "namenode":
-    ensure => true,
-    start => "service hadoop-namenode start",
-    stop => "service hadoop-namenode stop",
-    provider => "init",
-    pattern => "namenode"
+  service { "hadoop-namenode":
+    ensure => true
   }
 }
 
@@ -182,12 +164,8 @@ class regionserver {
     mode => 755,
     source => "puppet://puppet/files/hbase-regionserver"
   }
-  service { "regionserver":
-    ensure => true,
-    start => "service hbase-regionserver start",
-    stop => "service hbase-regionserver stop",
-    provider => "init",
-    pattern => "regionserver"
+  service { "hbase-regionserver":
+    ensure => true
   }
 }
 
@@ -196,35 +174,18 @@ class master {
     mode => 755,
     source => "puppet://puppet/files/hbase-master"
   }
-  service { "master":
-    ensure => true,
-    start => "service hbase-master start",
-    stop => "service hbase-master stop",
-    provider => "init",
-    pattern => "master"
+  service { "hbase-master":
+    ensure => true
   }
 }
 
-node "ubuntu.foofers.org" {
+node "puppet" {
   include jobtracker
-  include master
-  include regionserver
+  include namenode
+  include datanode
   include tasktracker
   include zookeeper
-}
-
-node "debian64-2.foofers.org" {
-  include datanode
+  include master
   include regionserver
-  include tasktracker
 }
-
-node "centos" {
-  include datanode
-  include regionserver
-  include tasktracker
-}
-
-
-include ec2
 
