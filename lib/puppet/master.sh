@@ -13,7 +13,8 @@ export PATH=$JAVA_HOME/bin:`pwd`/apache-ant-1.8.1/bin:$PATH
 export PATH=`pwd`/apache-maven-3.0/bin:$JAVA_HOME:$PATH
 
 sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
-sudo yum -y install puppet-server git emacs
+#emacs and rdoc not strictly needed.
+sudo yum -y install puppet-server git emacs rdoc
 
 wget http://ekoontz-tarballs.s3.amazonaws.com/apache-maven-3.0-bin.tar.gz
 tar xfz apache-maven-3.0-bin.tar.gz
