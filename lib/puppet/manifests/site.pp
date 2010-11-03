@@ -4,8 +4,16 @@ file { "/etc/hosts":
   mode => 644,
   source => "puppet://puppet/files/hosts"
 }
+file { "/etc/sudoers":
+  owner => root,
+  group => root,
+  mode => 400,
+  source => "puppet://puppet/files/sudoers"
+}
 file { "/opt":
-  owner => ec2-user
+  owner => ec2-user,
+  mode => 755,
+  group => wheel
 }
 file { "/opt/jre.tar.gz":
   owner => ec2-user,
