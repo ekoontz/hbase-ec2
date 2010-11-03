@@ -26,7 +26,7 @@ start() {
 }
 
 stop() {
-	start-stop-daemon --chuid $HADOOP_USER --exec /opt/hadoop-common/bin/hadoop-daemon.sh --start -- stop namenode
+	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh stop namenode
 	echo
 }
 
