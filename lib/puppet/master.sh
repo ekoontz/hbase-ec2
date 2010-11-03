@@ -72,6 +72,9 @@ tar -czf /tmp/puppetfiles/jre.tar.gz jre1.6.0_22
 tar -czf /tmp/puppetfiles/m2.tar.gz .m2
 tar -czf /tmp/puppetfiles/zookeeper.tar.gz zookeeper
 cp ~/hbase-ec2/lib/initscripts/* /tmp/puppetfiles
+export PUPPET_MASTER_IP=`/sbin/ifconfig eth0 | grep "inet addr" | cut -d: -f2-2 | cut -d' ' -f1`
+cp /etc/hosts /tmp/puppetfiles/hosts
+echo "$PUPPET_MASTER_IP    puppet namenode zookeeper jobtracker master" >> /tmp/puppetfiles/hosts
 
 #start up puppet server
 sudo cp hbase-ec2/lib/puppet/puppet.conf /etc/puppet/
@@ -79,7 +82,11 @@ sudo cp hbase-ec2/lib/puppet/manifests/site.pp /etc/puppet/manifests/
 sudo cp hbase-ec2/lib/puppet/fileserver.conf /etc/puppet
 
 sudo /etc/init.d/puppetmaster start
-export PUPPET_MASTER_IP=`/sbin/ifconfig eth0 | grep "inet addr" | cut -d: -f2-2 | cut -d' ' -f1`
+
+#turn off requiretty so that services can sudo.
+cat /etc/sudoers | perl -pe 's/^(Defaults\s+requiretty)/#\1/' > /tmp/sudoers 
+chmod 400 /tmp/sudoers 
+cp /tmp/sudoers /etc
 
 #start puppet slave on this host.
 sudo sh hbase-ec2/lib/puppet/slave.sh $PUPPET_MASTER_IP
