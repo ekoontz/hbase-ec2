@@ -75,8 +75,7 @@ sudo cp hbase-ec2/lib/puppet/fileserver.conf /etc/puppet
 sudo /etc/init.d/puppetmaster start
 
 #turn off (comment out) requiretty so that sudo-using services can start from puppet.
-sudo cat /etc/sudoers | perl -pe 's/^(Defaults\s+requiretty)/#\1/' > /tmp/puppetfiles
-sudo cp /tmp/sudoers /tmp/puppetfiles
+sudo cat /etc/sudoers | perl -pe 's/^(Defaults\s+requiretty)/#\1/' > /tmp/puppetfiles/sudoers
 
 #start puppet slave on this host.
 sudo sh hbase-ec2/lib/puppet/slave.sh $PUPPET_MASTER_IP
