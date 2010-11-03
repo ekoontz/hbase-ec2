@@ -46,7 +46,7 @@ cd ~
 git clone git://github.com/trendmicro/hbase.git 
 cd hbase
 git checkout security
-mvn clean dependency:build-classpath compile
+mvn clean compile
 cp ~/hbase-ec2/lib/puppet/hbase-site.xml conf
 
 cd ~
