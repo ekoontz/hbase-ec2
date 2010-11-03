@@ -148,7 +148,7 @@ class namenode {
   exec { "/opt/hadoop-common/hadoop namenode -format":
       user => ec2-user,
       group => ec2-user,
-      creates => "/tmp/hadoop-ec2-user"
+      creates => "/tmp/hadoop-ec2-user/dfs/name"
   }
   file { "/etc/init.d/hadoop-namenode":
     mode => 755,
