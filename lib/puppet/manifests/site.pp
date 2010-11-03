@@ -198,3 +198,8 @@ node "puppet" {
   include regionserver
 }
 
+node default {
+  include datanode
+  include regionserver
+  include tasktracker
+}
