@@ -145,7 +145,7 @@ class jobtracker {
 }
 
 class namenode {
-  exec { "/opt/hadoop-common/hadoop namenode -format":
+  exec { "/opt/hadoop-common/bin/hadoop namenode -format":
       user => ec2-user,
       group => ec2-user,
       creates => "/tmp/hadoop-ec2-user/dfs/name"
