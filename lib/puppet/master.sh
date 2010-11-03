@@ -13,7 +13,7 @@ export PATH=$JAVA_HOME/bin:`pwd`/apache-ant-1.8.1/bin:$PATH
 export PATH=`pwd`/apache-maven-3.0/bin:$JAVA_HOME:$PATH
 
 sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
-sudo yum -y install puppet-server screen git emacs telnet
+sudo yum -y install puppet-server git emacs
 
 wget http://ekoontz-tarballs.s3.amazonaws.com/apache-maven-3.0-bin.tar.gz
 tar xfz apache-maven-3.0-bin.tar.gz
@@ -33,8 +33,6 @@ git checkout yahoo-hadoop-0.20.104-append
 ant clean compile
 cp ~/hbase-ec2/lib/puppet/hdfs-site.xml conf
 cp ~/hbase-ec2/lib/puppet/mapred-site.xml conf
-cd ~/hadoop-common
-bin/hadoop namenode -format
 
 cd ~
 git clone git://github.com/apache/zookeeper.git
@@ -46,23 +44,14 @@ cd ~
 git clone git://github.com/trendmicro/hbase.git 
 cd hbase
 git checkout security
-mvn clean compile
+mvn clean compile dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt
 cp ~/hbase-ec2/lib/puppet/hbase-site.xml conf
-
-cd ~
-git clone git://github.com/apache/solr.git
-git checkout release-1.4.1
-cd solr
-ant clean compile
-cd solr/example
-mkdir -p logs
-mkdir -p webapps
-wget -O webapps/solr.war "http://ekoontz-tarballs.s3.amazonaws.com/solr.war"
 
 cd ~
 wget -O jre.bin "http://ekoontz-tarballs.s3.amazonaws.com/jre-6u22-linux-x64.bin"
 sh ./jre.bin
 
+# done compiling stuff: now copy it all to where puppetmaster can find it.
 cd ~
 mkdir -p /tmp/puppetfiles
 
@@ -76,6 +65,8 @@ export PUPPET_MASTER_IP=`/sbin/ifconfig eth0 | grep "inet addr" | cut -d: -f2-2 
 cp /etc/hosts /tmp/puppetfiles/hosts
 echo "$PUPPET_MASTER_IP    puppet namenode zookeeper jobtracker master" >> /tmp/puppetfiles/hosts
 
+sudo cp /tmp/puppetfiles/hosts /etc
+
 #start up puppet server
 sudo cp hbase-ec2/lib/puppet/puppet.conf /etc/puppet/
 sudo cp hbase-ec2/lib/puppet/manifests/site.pp /etc/puppet/manifests/
@@ -83,10 +74,10 @@ sudo cp hbase-ec2/lib/puppet/fileserver.conf /etc/puppet
 
 sudo /etc/init.d/puppetmaster start
 
-#turn off requiretty so that services can sudo.
-cat /etc/sudoers | perl -pe 's/^(Defaults\s+requiretty)/#\1/' > /tmp/sudoers 
+#turn off (comment out) requiretty so that sudo-using services can start from puppet.
+sudo cat /etc/sudoers | perl -pe 's/^(Defaults\s+requiretty)/#\1/' > /tmp/sudoers 
 chmod 400 /tmp/sudoers 
-cp /tmp/sudoers /etc
+sudo cp /tmp/sudoers /etc
 
 #start puppet slave on this host.
 sudo sh hbase-ec2/lib/puppet/slave.sh $PUPPET_MASTER_IP
