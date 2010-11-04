@@ -354,7 +354,7 @@ module Hadoop
           }
         end
 
-        if ((retval2 == nil) && (search_all_visible_images == true))
+        if ((retval2.size == 0) && (search_all_visible_images == true))
           options.delete(:owner_id)
           puts "image named '#{image_label}' not found in owner #{@@owner_id}'s images; looking in all images (may take a while..)"
           retval = @@shared_base_object.describe_images(options)
@@ -398,14 +398,14 @@ module Hadoop
   end
   
   class HCluster < AWS::EC2::Base
-
     # launchp: launch with puppet (eventually will just be launch once old function is removed).
     def launchp( options = {} )
       #set up a puppet master with specified number of slaves (default=2).
 
       #order of precedence is : supplied method options > this object's options > defaults (as specified below)
       options = {
-        :slaves => 2
+        :slaves => 2,
+        :ami => (@image && @image["imageId"])
       }.merge(self.options).merge(options)
 
       #Note: although 2 slaves are specified, in reality there will 
@@ -718,27 +718,9 @@ module Hadoop
       @zk_image_label = options[:zk_image_label]
       @master_image_label = options[:master_image_label]
       @slave_image_label = options[:slave_image_label]
-      
-      if (options[:validate_images] == true)
-        #validate image names (make sure they exist in Amazon's set).
-        @zk_image_ = zk_image
-        if (!@zk_image_)
-          raise HClusterStartError,
-          "could not find image called '#{@zk_image_label}'."
-        end
-        
-        @master_image_ = master_image
-        if (!@master_image_)
-          raise HClusterStartError,
-          "could not find image called '#{@master_image_label}'."
-        end
-        
-        @slave_image_ = regionserver_image
-        if (!@slave_image_)
-          raise HClusterStartError,
-          "could not find image called '#{@slave_image_label}'."
-        end
-        
+
+      if options[:label]
+        @image = get_image(options[:label])
       end
       
       #security_groups
@@ -1451,26 +1433,12 @@ module Hadoop
 
       if image_label
         options = {
-          :owner_id => @@owner_id
+          :owner_id => @@owner_id,
+          :label => image_label
         }.merge(options)
-        
-        retval = @@shared_base_object.describe_images(options)
-        #filter by image_label
-        retval2 = retval['imagesSet']['item'].detect{
-          |image| image['name'] == image_label
-        }
-        
-        if (retval2 == nil and search_all_visible_images == true)
-          old_owner = options[:owner_id]
-          options.delete(:owner_id)
-          puts "image '#{image_label}' not found in owner #{old_owner}'s images; looking in all images (may take a while..)"
-          retval = @@shared_base_object.describe_images(options)
-          #filter by image_label
-          retval2 = retval['imagesSet']['item'].detect{
-            |image| image['name'] == image_label
-          }
-        end
-        retval2
+
+        Himage.describe_images(options)
+
       else
         @@shared_base_object.describe_images(options)
       end
@@ -1506,7 +1474,7 @@ module Hadoop
         :owner_id => @ami_owner_id
       }.merge(options)
 
-      matching_image = HCluster.describe_images(options,image_label)
+      matching_image = Himage.describe_images :label => image_label
       if matching_image
         matching_image
       else
