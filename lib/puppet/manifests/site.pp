@@ -208,21 +208,72 @@ class devtools {
     package {"git": ensure => installed, require => Yumrepo["epel"] }
     package {"emacs": ensure => installed, require => Yumrepo["epel"] }
     package {"ruby-rdoc": ensure => installed, require => Yumrepo["epel"] }
-    exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/apache-maven-3.0-bin.tar.gz -O /home/ec2-user/apache-maven-3.0-bin.tar.gz":
+ 
+   exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/jdk1.6.0_22.tar.gz":
       user => ec2-user,
       group => ec2-user,
-      creates => "/home/ec2-user/apache-maven-3.0-bin.tar.gz",
+      cwd => "/tmp/build",
+      creates => "/tmp/build/jdk1.6.0_22.tar.gz",
       path => ["/bin","/usr/bin"]
     }
-    exec { "tar -xzf /home/ec2-user/apache-maven-3.0-bin.tar.gz":
+    exec { "tar -xzf /tmp/build/jdk1.6.0_22.tar.gz":
       user => "ec2-user",
       group => "ec2-user",
-      cwd => "/tmp",
-      creates => "/home/ec2-user/apache-maven-3.0",
+      cwd => "/tmp/build",
+      creates => "/tmp/build/jdk1.6.0_22",
       path => ["/bin","/usr/bin"],
-      onlyif => "test -f /home/ec2-user/apache-maven-3.0-bin.tar.gz"
+      onlyif => "test -f /tmp/build/jdk1.6.0_22.tar.gz":
+    }	 
+ 
+   exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/apache-maven-3.0-bin.tar.gz":
+      user => ec2-user,
+      group => ec2-user,
+      cwd => "/tmp/build",
+      creates => "/tmp/build/apache-maven-3.0-bin.tar.gz",
+      path => ["/bin","/usr/bin"]
+    }
+    exec { "tar -xzf /tmp/build/apache-maven-3.0-bin.tar.gz":
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/tmp/build",
+      creates => "/tmp/build/apache-maven-3.0",
+      path => ["/bin","/usr/bin"],
+      onlyif => "test -f /tmp/build/apache-maven-3.0-bin.tar.gz"
     }	 
 
+    exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/m2.tar.gz":
+      user => ec2-user,
+      group => ec2-user,
+      cwd => "/tmp/build",
+      creates => "/tmp/build/m2.tar.gz",
+      path => ["/bin","/usr/bin"]
+    }
+    exec { "tar -xzf /tmp/build/m2.tar.gz":
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/home/ec2",
+      creates => "/home/ec2-user/.m2",
+      path => ["/bin","/usr/bin"],
+      onlyif => "test -f /tmp/build/m2.tar.gz"
+    }	 
+
+    exec { "git clone git://github.com/ekoontz/hbase-ec2.git":
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/tmp/build"
+    }            
+
+    exec { "git clone git://github.com/trendmicro/hadoop-common.git":
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/tmp/build"
+    }            
+
+    exec { "git clone git://github.com/apache/zookeeper.git":
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/tmp/build"
+    }            
 }
 
 node "puppet" {
