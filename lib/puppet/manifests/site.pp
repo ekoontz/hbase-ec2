@@ -195,7 +195,39 @@ class master {
   }
 }
 
+class base {
+  yumrepo { "epel":
+    baseurl => "http://download.fedora.redhat.com/pub/epel/5/x86_64/",
+    descr => "Extra Packages for Enterprise Linux",
+    enabled => 1,
+    gpgcheck => 0
+  }
+}
+
+class devtools {
+    package {"git": ensure => installed, require => Yumrepo["epel"] }
+    package {"emacs": ensure => installed, require => Yumrepo["epel"] }
+    package {"ruby-rdoc": ensure => installed, require => Yumrepo["epel"] }
+    exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/apache-maven-3.0-bin.tar.gz -O /home/ec2-user/apache-maven-3.0-bin.tar.gz":
+      user => ec2-user,
+      group => ec2-user,
+      creates => "/home/ec2-user/apache-maven-3.0-bin.tar.gz",
+      path => ["/bin","/usr/bin"]
+    }
+    exec { "tar -xzf /home/ec2-user/apache-maven-3.0-bin.tar.gz":
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/tmp",
+      creates => "/home/ec2-user/apache-maven-3.0",
+      path => ["/bin","/usr/bin"],
+      onlyif => "test -f /home/ec2-user/apache-maven-3.0-bin.tar.gz"
+    }	 
+
+}
+
 node "puppet" {
+  include base
+  include devtools
   include jobtracker
   include namenode
   include datanode
