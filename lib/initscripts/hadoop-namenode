@@ -9,10 +9,6 @@
 #               see: 
 #                 http://github.com/ekoontz/hbase-ec2/blob/puppet/lib/puppet/manifests/site.pp
 
-# source function library
-
-. /lib/lsb/init-functions
-
 RETVAL=0
 #fixme: use system env.
 export JAVA_HOME=/opt/jre1.6.0_22
