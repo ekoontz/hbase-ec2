@@ -118,7 +118,8 @@ class zookeeper {
     source => "puppet://puppet/files/zookeeper-quorum-member"
   }
   service { "zookeeper-quorum-member":
-    ensure => true
+    ensure => true,
+    pattern => "zookeeper"
   }
 }
 
@@ -128,7 +129,8 @@ class datanode {
     source => "puppet://puppet/files/hadoop-datanode"
   }
   service { "hadoop-datanode":
-    ensure => true
+    ensure => true,
+    pattern => "namenode"
   }
 }
 
@@ -138,7 +140,8 @@ class tasktracker {
     source => "puppet://puppet/files/hadoop-tasktracker"
   }
   service { "hadoop-tasktracker":
-    ensure => true
+    ensure => true,
+    pattern => "tasktracker"
   }
 }
 
@@ -148,7 +151,8 @@ class jobtracker {
     source => "puppet://puppet/files/hadoop-jobtracker"
   }
   service { "hadoop-jobtracker":
-    ensure => true
+    ensure => true,
+    pattern => "jobtracker"
   }
 }
 
@@ -164,7 +168,8 @@ class namenode {
     source => "puppet://puppet/files/hadoop-namenode"
   }
   service { "hadoop-namenode":
-    ensure => true
+    ensure => true,
+    pattern => "namenode"
   }
 }
 
@@ -174,7 +179,8 @@ class regionserver {
     source => "puppet://puppet/files/hbase-regionserver"
   }
   service { "hbase-regionserver":
-    ensure => true
+    ensure => true,
+    pattern => "regionserver"
   }
 }
 
@@ -184,7 +190,8 @@ class master {
     source => "puppet://puppet/files/hbase-master"
   }
   service { "hbase-master":
-    ensure => true
+    ensure => true,
+    pattern => "master"
   }
 }
 
