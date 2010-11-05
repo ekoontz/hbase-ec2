@@ -14,16 +14,17 @@ RETVAL=0
 export JAVA_HOME=/opt/jre1.6.0_22
 export PATH=$JAVA_HOME/bin:$PATH
 export HBASE_USER=ec2-user
+export HBASE_CLASSPATH=/opt/hadoop-common/build/classes
 
 set -x
 start() {
-	sudo -u $HBASE_USER JAVA_HOME=$JAVA_HOME /opt/hbase/bin/hbase-daemon.sh start regionserver
+	sudo -u $HBASE_USER JAVA_HOME=$JAVA_HOME HBASE_CLASSPATH=$HBASE_CLASSPATH /opt/hbase/bin/hbase-daemon.sh start regionserver
 	RETVAL=$?
 	echo
 }
 
 stop() {
-	sudo -u $HBASE_USER JAVA_HOME=$JAVA_HOME /opt/hbase/bin/hbase-daemon.sh stop regionserver
+	sudo -u $HBASE_USER JAVA_HOME=$JAVA_HOME HBASE_CLASSPATH=$HBASE_CLASSPATH /opt/hbase/bin/hbase-daemon.sh stop regionserver
 	echo
 }
 
