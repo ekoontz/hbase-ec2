@@ -507,7 +507,7 @@ class build {
      path => ["/bin","/usr/bin"],
      subscribe => Exec["compile_zookeeper"],
      creates => "/tmp/puppetfiles/zookeeper.tar.gz",
-     onlyif => "test -x /home/ec2-user/zookeeper/build"
+     onlyif => "test -d /home/ec2-user/zookeeper/build"
    }
 
    exec { "compile_hadoop":
@@ -530,7 +530,7 @@ class build {
      path => ["/bin","/usr/bin"],
      subscribe => Exec["compile_hadoop"],
      creates => "/tmp/puppetfiles/hadoop-common.tar.gz",
-     onlyif => "test -x /home/ec2-user/hadoop-common/build"
+     onlyif => "test -d /home/ec2-user/hadoop-common/build"
    }
 
    exec { "compile_hbase":
@@ -552,7 +552,7 @@ class build {
      path => ["/bin","/usr/bin"],
      subscribe => Exec["compile_hbase"],
      creates => "/tmp/puppetfiles/hbase.tar.gz",
-     onlyif => "test -x /home/ec2-user/hbase/target"
+     onlyif => "test -d /home/ec2-user/hbase/target"
    }
    include initscripts
 }
