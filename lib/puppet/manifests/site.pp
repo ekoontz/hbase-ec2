@@ -110,7 +110,8 @@ class install_runtime {
     cwd => "/home/ec2-user",
     path => ["/bin","/usr/bin"],
     onlyif => "test -f /opt/m2.tar.gz", 
-    subscribe => File["/opt/m2.tar.gz"]
+    subscribe => File["/opt/m2.tar.gz"],
+    creates => "/home/ec2-user/.m2"
   }	 
   
   file { "/opt/hadoop-common/logs":
@@ -404,7 +405,7 @@ class devtools {
     }            
 
     exec { "checkout_hadoop_append":
-      command => "git checkout -b yahoo-hadoop-0.20.104-append || git checkout yahoo-hadoop-0.20.104-append",
+      command => "git checkout origin/yahoo-hadoop-0.20.104-append",
       user => "ec2-user",
       group => "ec2-user",
       cwd => "/home/ec2-user/hadoop-common",
@@ -427,7 +428,7 @@ class devtools {
     }            
 
     exec { "checkout_hbase_security":
-      command => "git checkout -b security || git checkout security",
+      command => "git checkout origin/security",
       user => "ec2-user",
       group => "ec2-user",
       cwd => "/home/ec2-user/hbase",
@@ -505,7 +506,8 @@ class build {
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
      subscribe => Exec["compile_zookeeper"],
-     creates => "/tmp/puppetfiles/zookeeper.tar.gz"
+     creates => "/tmp/puppetfiles/zookeeper.tar.gz",
+     onlyif => "test -x /home/ec2-user/zookeeper/build"
    }
 
    exec { "compile_hadoop":
@@ -527,7 +529,8 @@ class build {
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
      subscribe => Exec["compile_hadoop"],
-     creates => "/tmp/puppetfiles/hadoop-common.tar.gz"
+     creates => "/tmp/puppetfiles/hadoop-common.tar.gz",
+     onlyif => "test -x /home/ec2-user/hadoop-common/build"
    }
 
    exec { "compile_hbase":
@@ -548,7 +551,8 @@ class build {
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
      subscribe => Exec["compile_hbase"],
-     creates => "/tmp/puppetfiles/hbase.tar.gz"
+     creates => "/tmp/puppetfiles/hbase.tar.gz",
+     onlyif => "test -x /home/ec2-user/hbase/target"
    }
    include initscripts
 }
