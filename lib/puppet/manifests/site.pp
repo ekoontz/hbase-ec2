@@ -30,7 +30,15 @@ class base {
 
 class install_runtime {
   include base
-
+  
+  file { "/etc/sudoers":
+    owner => root,
+    group => root,
+    mode => 400,
+    source => "puppet://puppet/files/sudoers",
+    backup => ".sudoers-bak"
+  }
+  
   file { "/opt":
     owner => ec2-user,
     mode => 755,
@@ -43,14 +51,6 @@ class install_runtime {
     ignore => ".git*",
     source => "puppet://puppet/files/jre.tar.gz"
   }
-  file { "/opt/hadoop-common.tar.gz":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/hadoop-common.tar.gz"
-  }
-
   exec { "tar -xzf /opt/jre.tar.gz":
     user => "ec2-user",
     group => "ec2-user",
@@ -60,7 +60,14 @@ class install_runtime {
     onlyif => "test -f /opt/jre.tar.gz", 
     subscribe => File["/opt/jre.tar.gz"]
   }	
- 
+
+  file { "/opt/hadoop-common.tar.gz":
+    owner => ec2-user,
+    group => ec2-user,
+    mode => 750,
+    ignore => ".git*",
+    source => "puppet://puppet/files/hadoop-common.tar.gz"
+  }
   exec { "tar -xzf /opt/hadoop-common.tar.gz":
     user => ec2-user,
     group => ec2-user,
@@ -70,7 +77,7 @@ class install_runtime {
     onlyif => "test -f /opt/hadoop-common.tar.gz", 
     subscribe => File["/opt/hadoop-common.tar.gz"] 
   }	 
-	 
+
   file { "/opt/hbase.tar.gz":
     owner => ec2-user,
     group => ec2-user,
@@ -78,7 +85,6 @@ class install_runtime {
     ignore => ".git*",
     source => "puppet://puppet/files/hbase.tar.gz"
   }
-
   exec { "tar -xzf /opt/hbase.tar.gz":
     user => ec2-user,
     group => ec2-user,
@@ -88,12 +94,49 @@ class install_runtime {
     onlyif => "test -f /opt/hbase.tar.gz", 
     subscribe => File["/opt/hbase.tar.gz"]
   }	 
+
+  file { "/opt/m2.tar.gz":
+    owner => ec2-user,
+    group => ec2-user,
+    mode => 750,
+    ignore => ".git*",
+    source => "puppet://puppet/files/m2.tar.gz",
+    notify => Exec["untar_m2"]
+  }
+  exec { "untar_m2":
+    command => "tar -xzf /opt/m2.tar.gz",
+    user => ec2-user,
+    group => ec2-user,
+    cwd => "/home/ec2-user",
+    path => ["/bin","/usr/bin"],
+    onlyif => "test -f /opt/m2.tar.gz", 
+    subscribe => File["/opt/m2.tar.gz"]
+  }	 
+  
   file { "/opt/hadoop-common/logs":
     mode => 755,
     owner => ec2-user
   }
   file { "/opt/hbase/logs":
     mode => 755,
+    owner => ec2-user
+  }
+
+  file { "/opt/hadoop-common/conf/hdfs-site.xml":
+    source => "puppet://puppet/files/hdfs-site.xml",
+    mode => 644,
+    owner => ec2-user
+  }
+
+  file { "/opt/hadoop-common/conf/mapred-site.xml":
+    source => "puppet://puppet/files/mapred-site.xml",
+    mode => 644,
+    owner => ec2-user
+  }
+
+  file { "/opt/hbase/conf/hbase-site.xml":
+    source => "puppet://puppet/files/hbase-site.xml",
+    mode => 644,
     owner => ec2-user
   }
 }
@@ -116,6 +159,13 @@ class zookeeper {
     onlyif => "test -f /opt/zookeeper.tar.gz", 
     subscribe => File["/opt/zookeeper.tar.gz"]
   }	 
+
+  file { "/opt/zookeeper/conf/zoo.cfg":
+    source => "puppet://puppet/files/zoo.cfg",
+    mode => 644,
+    owner => ec2-user
+  }
+  
   exec { "mkdir -p /tmp/zk-data":
     user => ec2-user,
     group => ec2-user,
@@ -128,7 +178,8 @@ class zookeeper {
   }
   service { "zookeeper-quorum-member":
     ensure => true,
-    pattern => "zookeeper"
+    pattern => "zookeeper",
+    enable => true
   }
 }
 
@@ -140,7 +191,7 @@ class datanode {
   }
   service { "hadoop-datanode":
     ensure => true,
-    pattern => "namenode"
+    pattern => "datanode"
   }
 }
 
@@ -206,7 +257,8 @@ class master {
   }
   service { "hbase-master":
     ensure => true,
-    pattern => "master"
+    pattern => "master",
+    enable => true
   }
 }
 
@@ -214,11 +266,11 @@ class devtools {
     include base
 # note that we don't 'include install_runtime' here since
 # the 'install_runtime' requires artifacts that we build here
-    include sources
 
-    package {"git": ensure => installed, require => Yumrepo["epel"] }
-    package {"emacs": ensure => installed, require => Yumrepo["epel"] }
-    package {"ruby-rdoc": ensure => installed, require => Yumrepo["epel"] }
+    package {"git": ensure => installed}
+    package {"emacs": ensure => installed}
+    package {"ruby-rdoc": ensure => installed}
+    package {"telnet": ensure => installed}
  
    exec { "wget_jdk":
       command => "wget http://ekoontz-tarballs.s3.amazonaws.com/jdk1.6.0_22.tar.gz",
@@ -271,7 +323,8 @@ class devtools {
       onlyif => "test -f /home/ec2-user/apache-ant-1.8.1-bin.tar.bz2"
     }	 
 
-    exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/jre-6u22-linux-x64.bin":
+    exec { "wget_jre":
+      command => "wget http://ekoontz-tarballs.s3.amazonaws.com/jre-6u22-linux-x64.bin",
       user => ec2-user,
       group => ec2-user,
       cwd => "/home/ec2-user",
@@ -286,6 +339,7 @@ class devtools {
       cwd => "/home/ec2-user",
       creates => "/home/ec2-user/jre1.6.0_22",
       path => ["/bin","/usr/bin"],
+      subscribe => Exec["wget_jre"],
       notify => Exec["tarball_jre"]
     }
 
@@ -295,10 +349,12 @@ class devtools {
         user => "ec2-user",
         group => "ec2-user",
         path => ["/bin","/usr/bin"],
-        subscribe => Exec["sh_jre"]
+        subscribe => Exec["sh_jre"],
+        creates => "/tmp/puppetfiles/jre.tar.gz"
     }
 
-    exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/m2.tar.gz -o /tmp/puppetfiles/m2.tar.gz":
+    exec { "wget_m2":
+      command => "wget http://ekoontz-tarballs.s3.amazonaws.com/m2.tar.gz -O /tmp/puppetfiles/m2.tar.gz",
       user => ec2-user,
       group => ec2-user,
       cwd => "/home/ec2-user",
@@ -311,7 +367,7 @@ class devtools {
       cwd => "/home/ec2-user",
       creates => "/home/ec2-user/.m2",
       path => ["/bin","/usr/bin"],
-      onlyif => "test -f /home/ec2-user/m2.tar.gz"
+      subscribe => Exec["wget_m2"]
     }	 
  }
 
@@ -323,16 +379,17 @@ class devtools {
       cwd => "/home/ec2-user",
       onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/hbase-ec2"],
       path => ["/bin","/usr/bin"],
-      notify => Exec["checkout_hbase_ec2_branch"]
+      notify => Exec["checkout_hbase_ec2"]
     }            
 
-    exec { "checkout_hbase_ec2_branch":
+    exec { "checkout_hbase_ec2":
       command => "git checkout -b puppet || git checkout puppet",
       user => "ec2-user",
       group => "ec2-user",
       cwd => "/home/ec2-user/hbase-ec2",
       onlyif => "test -x /usr/bin/git",
-      path => ["/bin","/usr/bin"]
+      path => ["/bin","/usr/bin"],
+      notify => Exec["zk_conf"]
     }
 
     exec { "clone_hadoop":
@@ -343,18 +400,18 @@ class devtools {
       onlyif => "test -x /usr/bin/git",
       path => ["/bin","/usr/bin"],
       creates => "/home/ec2-user/hadoop-common",
-      notify => Exec["checkout_append"],
+      notify => Exec["checkout_hadoop_append"],
     }            
 
-    exec { "checkout_append":
+    exec { "checkout_hadoop_append":
       command => "git checkout -b yahoo-hadoop-0.20.104-append || git checkout yahoo-hadoop-0.20.104-append",
       user => "ec2-user",
       group => "ec2-user",
       cwd => "/home/ec2-user/hadoop-common",
       onlyif => "test -x /usr/bin/git",
       path => ["/bin","/usr/bin"],
-      subscribe => Exec["clone_hadoop"],
-      notify => Exec["compile_hadoop"]
+      subscribe => Exec["clone_hadoop"]
+      #, notify => Class["compile_hadoop"]
     }            
 
 
@@ -365,18 +422,18 @@ class devtools {
       cwd => "/home/ec2-user",
       onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/hbase"],
       path => ["/bin","/usr/bin"],
-      notify => Exec["checkout_security"],
+      notify => Exec["checkout_hbase_security"],
       creates => "/home/ec2-user/hbase"
     }            
 
-    exec { "checkout_security":
+    exec { "checkout_hbase_security":
       command => "git checkout -b security || git checkout security",
       user => "ec2-user",
       group => "ec2-user",
       cwd => "/home/ec2-user/hbase",
       path => ["/bin","/usr/bin"],
-      subscribe => Exec["clone_hbase"],
-      notify => Exec["compile_hbase"]
+      subscribe => Exec["clone_hbase"]
+      #,      notify => Exec["compile_hbase"]
     }            
 
     exec { "clone_zookeeper":
@@ -386,101 +443,155 @@ class devtools {
       cwd => "/home/ec2-user",
       onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/zookeeper"],
       path => ["/bin","/usr/bin"],
-      creates => "/home/ec2-user/zookeeper",
-      notify => Exec["compile_zookeeper"]
+      creates => "/home/ec2-user/zookeeper"
+#,      notify => Exec["compile_zookeeper"]
     }            
 
-  class build {
-
-    exec { "compile_zookeeper":
-      subscribe => Exec["clone_zookeeper"],
+    exec { "zk_conf":
+      command => "cp /home/ec2-user/hbase-ec2/lib/puppet/zoo.cfg /tmp/puppetfiles",
       user => "ec2-user",
       group => "ec2-user",
-      command => "ant compile",
-      cwd => "/home/ec2-user/zookeeper",
-      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
-      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-      timeout => "-1",
+      creates => "/tmp/puppetfiles/zoo.cfg",
+      path => ["/bin"],
       notify => Exec["tarball_zookeeper"]
     }
-
-    exec {"tarball_zookeeper":
-	command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/zookeeper.tar.gz zookeeper",
-        cwd => "/home/ec2-user",
-        user => "ec2-user",
-        group => "ec2-user",
-        path => ["/bin","/usr/bin"],
-        subscribe => Exec["compile_zookeeper"]
-    }
-
-    exec { "compile_hadoop":
+    exec { "hdfs_conf":
+      command => "cp /home/ec2-user/hbase-ec2/lib/puppet/hdfs-site.xml /tmp/puppetfiles",
       user => "ec2-user",
       group => "ec2-user",
-      command => "ant compile",
-      cwd => "/home/ec2-user/hadoop-common",
-      onlyif => "test -x /home/ec2-user/apache-ant-1.8.1/bin/ant",
-      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
-      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-      timeout => "-1",
+      creates => "/tmp/puppetfiles/hdfs-site.xml",
+      path => ["/bin"],
       notify => Exec["tarball_hadoop"]
     }
-
-    exec {"tarball_hadoop":
-	command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/hadoop-common.tar.gz hadoop-common",
-        cwd => "/home/ec2-user",
-        user => "ec2-user",
-        group => "ec2-user",
-        path => ["/bin","/usr/bin"],
-        subscribe => Exec["compile_hadoop"]
-    }
-
-    exec { "compile_hbase":
+    exec { "mapred_conf":
+      command => "cp /home/ec2-user/hbase-ec2/lib/puppet/mapred-site.xml /tmp/puppetfiles",
       user => "ec2-user",
       group => "ec2-user",
-      command => "mvn compile",
-      cwd => "/home/ec2-user/hbase",
-      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
-      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-      timeout => "-1",
-      subscribe => Exec["checkout_security"],
+      creates => "/tmp/puppetfiles/mapred-site.xml",
+      path => ["/bin"],
+      notify => Exec["tarball_hadoop"]
+    }
+    exec { "hbase_conf":
+      command => "cp /home/ec2-user/hbase-ec2/lib/puppet/hbase-site.xml /tmp/puppetfiles",
+      user => "ec2-user",
+      group => "ec2-user",
+      creates => "/tmp/puppetfiles/hbase-site.xml",
+      path => ["/bin"],
       notify => Exec["tarball_hbase"]
     }
 
-    exec {"tarball_hbase":
-	command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/hbase.tar.gz hbase",
-        cwd => "/home/ec2-user",
-        user => "ec2-user",
-        group => "ec2-user",
-        path => ["/bin","/usr/bin"],
-        subscribe => Exec["compile_hbase"]
-    }
+ }
+
+class build {
+   include devtools
+   include sources
+   
+   exec { "compile_zookeeper":
+     subscribe => Exec["clone_zookeeper"],
+     user => "ec2-user",
+     group => "ec2-user",
+     command => "ant compile",
+     cwd => "/home/ec2-user/zookeeper",
+     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
+     environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
+     notify => Exec["tarball_zookeeper"],
+     creates => "/home/ec2-user/zookeeper/build"
+   }
+   
+   exec {"tarball_zookeeper":
+     command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/zookeeper.tar.gz zookeeper",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"],
+     subscribe => Exec["compile_zookeeper"],
+     creates => "/tmp/puppetfiles/zookeeper.tar.gz"
+   }
+
+   exec { "compile_hadoop":
+     user => "ec2-user",
+     group => "ec2-user",
+     command => "ant compile",
+     cwd => "/home/ec2-user/hadoop-common",
+     onlyif => "test -x /home/ec2-user/apache-ant-1.8.1/bin/ant",
+     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
+     environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
+     notify => Exec["tarball_hadoop"],
+     creates => "/home/ec2-user/hadoop-common/build"
+   }
+   
+   exec {"tarball_hadoop":
+     command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/hadoop-common.tar.gz hadoop-common",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"],
+     subscribe => Exec["compile_hadoop"],
+     creates => "/tmp/puppetfiles/hadoop-common.tar.gz"
+   }
+
+   exec { "compile_hbase":
+     user => "ec2-user",
+     group => "ec2-user",
+     command => "mvn compile dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt",
+     cwd => "/home/ec2-user/hbase",
+     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
+     environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
+     notify => Exec["tarball_hbase"],
+     creates => "/home/ec2-user/hbase/target"
+   }
+   
+   exec {"tarball_hbase":
+     command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/hbase.tar.gz hbase",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"],
+     subscribe => Exec["compile_hbase"],
+     creates => "/tmp/puppetfiles/hbase.tar.gz"
+   }
+   include initscripts
+}
+ 
+class initscripts {
+  exec {"initscripts":
+    command => "cp -u /home/ec2-user/hbase-ec2/lib/initscripts/* /tmp/puppetfiles",
+    path => ["/bin"],
+    user => "ec2-user",
+    group => "ec2-user"
+  }
+
+  exec { "cat /etc/sudoers | perl -pe 's/^(Defaults\s+requiretty)/#Defaults requiretty/' > /tmp/puppetfiles/sudoers":
+    onlyif => "test ! -f /tmp/puppetfiles/sudoers",
+    path => ["/bin","/usr/bin"]
+  }
 
 }
 
-class puppetmaster {
-  include build
-}
+ class puppetmaster {
+   include build
+ }
 
-node "puppet" {
-  include puppetmaster
-  include install_runtime
+ node "puppet" {
+   include puppetmaster
 
 #master daemons.
-  include jobtracker
-  include namenode
-  include zookeeper
-  include master
+   include jobtracker
+   include namenode
+   include zookeeper
+   include master
 
 # we will economize by running all daemons (both masters and slaves)
 # on the puppetmaster host.
-  include datanode
-  include regionserver
-  include tasktracker
+   include datanode
+   include tasktracker
+   include regionserver
 }
 
 node default {
 # slave daemons.
   include datanode
-  include regionserver
   include tasktracker
+  include regionserver
 }
+
