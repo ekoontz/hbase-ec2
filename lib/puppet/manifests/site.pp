@@ -149,6 +149,7 @@ class zookeeper {
     source => "puppet://puppet/files/zookeeper-quorum-member"
   }
   service { "zookeeper-quorum-member":
+    subscribe => [ File["/opt/zookeeper/conf/zoo.cfg"] ],
     ensure => true,
     pattern => "zookeeper",
     enable => true
@@ -571,19 +572,11 @@ class initscripts {
 
  class puppetmaster {
    include make_tarballs
-
  }
 
  node "puppet" {
    include puppetmaster
-
-   include namenode
-   include datanode
-   include zookeeper
- }
-
- node "save" {
-#master daemons.
+   #master daemons.
    include jobtracker
    include namenode
    include zookeeper
