@@ -299,7 +299,8 @@ class devtools {
       creates => "/home/ec2-user/apache-maven-3.0-bin.tar.gz",
       path => ["/bin","/usr/bin"]
     }
-    exec { "tar -xzf /home/ec2-user/apache-maven-3.0-bin.tar.gz":
+    exec { "untar_maven":
+      command => "tar -xzf /home/ec2-user/apache-maven-3.0-bin.tar.gz",
       user => "ec2-user",
       group => "ec2-user",
       cwd => "/home/ec2-user",
@@ -315,7 +316,8 @@ class devtools {
       creates => "/home/ec2-user/apache-ant-1.8.1-bin.tar.bz2",
       path => ["/bin","/usr/bin"]
     }
-    exec { "tar -xjf /home/ec2-user/apache-ant-1.8.1-bin.tar.bz2":
+    exec { "untar_ant":
+      command => "tar -xjf /home/ec2-user/apache-ant-1.8.1-bin.tar.bz2",
       user => "ec2-user",
       group => "ec2-user",
       cwd => "/home/ec2-user",
@@ -488,7 +490,6 @@ class build {
    include sources
    
    exec { "compile_zookeeper":
-     subscribe => Exec["clone_zookeeper"],
      user => "ec2-user",
      group => "ec2-user",
      command => "ant compile",
@@ -496,7 +497,8 @@ class build {
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
      notify => Exec["tarball_zookeeper"],
-     creates => "/home/ec2-user/zookeeper/build"
+     subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["clone_zookeeper"] ],
+     refreshonly => true
    }
    
    exec {"tarball_zookeeper":
@@ -505,9 +507,9 @@ class build {
      user => "ec2-user",
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
-     subscribe => Exec["compile_zookeeper"],
      creates => "/tmp/puppetfiles/zookeeper.tar.gz",
-     onlyif => "test -d /home/ec2-user/zookeeper/build"
+     subscribe => Exec["compile_zookeeper"],
+     refreshonly => true
    }
 
    exec { "compile_hadoop":
@@ -515,11 +517,11 @@ class build {
      group => "ec2-user",
      command => "ant compile",
      cwd => "/home/ec2-user/hadoop-common",
-     onlyif => "test -x /home/ec2-user/apache-ant-1.8.1/bin/ant",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
      notify => Exec["tarball_hadoop"],
-     creates => "/home/ec2-user/hadoop-common/build"
+     subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["checkout_hadoop_append"] ],
+     refreshonly => true
    }
    
    exec {"tarball_hadoop":
@@ -528,9 +530,9 @@ class build {
      user => "ec2-user",
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
-     subscribe => Exec["compile_hadoop"],
      creates => "/tmp/puppetfiles/hadoop-common.tar.gz",
-     onlyif => "test -d /home/ec2-user/hadoop-common/build"
+     subscribe => Exec["compile_hadoop"],
+     refreshonly => true
    }
 
    exec { "compile_hbase":
@@ -541,7 +543,8 @@ class build {
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
      notify => Exec["tarball_hbase"],
-     creates => "/home/ec2-user/hbase/target"
+     subscribe => [ Exec["untar_jdk"],Exec["untar_maven"],Exec["untar_m2"],Exec["checkout_hbase_security"] ],
+     refreshonly => true
    }
    
    exec {"tarball_hbase":
@@ -550,9 +553,9 @@ class build {
      user => "ec2-user",
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
-     subscribe => Exec["compile_hbase"],
      creates => "/tmp/puppetfiles/hbase.tar.gz",
-     onlyif => "test -d /home/ec2-user/hbase/target"
+     subscribe => Exec["compile_hbase"],
+     refreshonly => true
    }
    include initscripts
 }
