@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+# chkconfig: 345 55 25
 # hbase-master
 #
 # Author:       Eugene Koontz <ekoontz@hiro-tan.org>
