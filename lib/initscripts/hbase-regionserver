@@ -15,7 +15,7 @@ RETVAL=0
 export JAVA_HOME=/opt/jre1.6.0_22
 export PATH=$JAVA_HOME/bin:$PATH
 export HBASE_USER=ec2-user
-export HBASE_CLASSPATH=/opt/hadoop-common/build/classes
+export HBASE_CLASSPATH=/opt/hadoop-common/build/hadoop-core-0.20.104.3-append-SNAPSHOT.jar
 
 set -x
 start() {

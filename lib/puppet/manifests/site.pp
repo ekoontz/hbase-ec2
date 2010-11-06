@@ -51,7 +51,7 @@ class install_runtime {
   file { "/opt/hadoop-common":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","*src/*"],
+    ignore => [".git*","/opt/hadoop-common/src/*","*.java","*.class"],
     source => "puppet://puppet/files/hadoop-common",
     recurse => true
   }
@@ -59,7 +59,7 @@ class install_runtime {
   file { "/opt/hbase":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","*src/*"],
+    ignore => [".git*","/opt/hbase/src/*","*.java","*.class"],
     source => "puppet://puppet/files/hbase",
     recurse => true
   }
@@ -97,7 +97,7 @@ class zookeeper {
   file { "/opt/zookeeper":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","*src/*"],
+    ignore => [".git*","*/src/*","*.java","*.class"],
     source => "puppet://puppet/files/zookeeper",
     recurse => true
   }
@@ -442,7 +442,7 @@ class build {
    exec { "compile_zookeeper":
      user => "ec2-user",
      group => "ec2-user",
-     command => "ant compile",
+     command => "ant jar",
      cwd => "/home/ec2-user/zookeeper",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
@@ -455,7 +455,7 @@ class build {
    exec { "compile_hadoop":
      user => "ec2-user",
      group => "ec2-user",
-     command => "ant compile",
+     command => "ant jar",
      cwd => "/home/ec2-user/hadoop-common",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
@@ -468,7 +468,7 @@ class build {
    exec { "compile_hbase":
      user => "ec2-user",
      group => "ec2-user",
-     command => "mvn compile dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt",
+     command => "mvn compile dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt jar:jar",
      cwd => "/home/ec2-user/hbase",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
@@ -556,7 +556,6 @@ class m2 {
      owner => ec2-user,
      group => ec2-user,
      mode => 750,
-     ignore => ".git*",
      source => "puppet://puppet/files/m2.tar.gz",
      notify => Exec["untar_m2"]
    }
