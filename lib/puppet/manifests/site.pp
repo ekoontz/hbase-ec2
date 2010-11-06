@@ -14,27 +14,13 @@ class base {
   }
 }
 
-#this might not be needed anymore...
-#exec { "cat /etc/sudoers | perl -pe 's/^(Defaults\s+requiretty)/#Defaults requiretty/' > /tmp/puppetfiles/sudoers":
-#    onlyif => "test ! -f /tmp/puppetfiles/sudoers",
-#    path => ["/bin","/usr/bin"]
-#}
-#..nor this.
-#file { "/etc/sudoers":
-#  owner => root,
-#  group => root,
-#  mode => 400,
-#  source => "puppet://puppet/files/sudoers",
-#  backup => ".sudoers-bak"
-#}
-
 class install_runtime {
   include base
   
   file { "/etc/sudoers":
     owner => root,
     group => root,
-    mode => 400,
+    mode => 440,
     source => "puppet://puppet/files/sudoers",
     backup => ".sudoers-bak"
   }
@@ -58,7 +44,8 @@ class install_runtime {
     creates => "/opt/jre1.6.0_22",
     path => ["/bin","/usr/bin"],
     onlyif => "test -f /opt/jre.tar.gz", 
-    subscribe => File["/opt/jre.tar.gz"]
+    subscribe => File["/opt/jre.tar.gz"],
+    refreshonly => true
   }	
 
   file { "/opt/hadoop-common.tar.gz":
@@ -75,7 +62,8 @@ class install_runtime {
     creates => "/opt/hadoop-common",
     path => ["/bin","/usr/bin"],
     onlyif => "test -f /opt/hadoop-common.tar.gz", 
-    subscribe => File["/opt/hadoop-common.tar.gz"] 
+    subscribe => File["/opt/hadoop-common.tar.gz"],
+    refreshonly => true
   }	 
 
   file { "/opt/hbase.tar.gz":
@@ -92,7 +80,8 @@ class install_runtime {
     creates => "/opt/hbase",
     path => ["/bin","/usr/bin"],
     onlyif => "test -f /opt/hbase.tar.gz", 
-    subscribe => File["/opt/hbase.tar.gz"]
+    subscribe => File["/opt/hbase.tar.gz"],
+    refreshonly => true
   }	 
 
   file { "/opt/m2.tar.gz":
@@ -111,7 +100,7 @@ class install_runtime {
     path => ["/bin","/usr/bin"],
     onlyif => "test -f /opt/m2.tar.gz", 
     subscribe => File["/opt/m2.tar.gz"],
-    creates => "/home/ec2-user/.m2"
+    refreshonly => true
   }	 
   
   file { "/opt/hadoop-common/logs":
@@ -158,7 +147,8 @@ class zookeeper {
     creates => "/opt/zookeeper",
     path => ["/bin","/usr/bin"],
     onlyif => "test -f /opt/zookeeper.tar.gz", 
-    subscribe => File["/opt/zookeeper.tar.gz"]
+    subscribe => File["/opt/zookeeper.tar.gz"],
+    refreshonly => true
   }	 
 
   file { "/opt/zookeeper/conf/zoo.cfg":
@@ -507,7 +497,6 @@ class build {
      user => "ec2-user",
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
-     creates => "/tmp/puppetfiles/zookeeper.tar.gz",
      subscribe => Exec["compile_zookeeper"],
      refreshonly => true
    }
@@ -530,7 +519,6 @@ class build {
      user => "ec2-user",
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
-     creates => "/tmp/puppetfiles/hadoop-common.tar.gz",
      subscribe => Exec["compile_hadoop"],
      refreshonly => true
    }
@@ -553,7 +541,6 @@ class build {
      user => "ec2-user",
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
-     creates => "/tmp/puppetfiles/hbase.tar.gz",
      subscribe => Exec["compile_hbase"],
      refreshonly => true
    }
