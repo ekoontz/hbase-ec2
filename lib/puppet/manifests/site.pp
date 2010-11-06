@@ -48,41 +48,21 @@ class install_runtime {
     refreshonly => true
   }	
 
-  file { "/opt/hadoop-common.tar.gz":
+  file { "/opt/hadoop-common":
     owner => ec2-user,
     group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/hadoop-common.tar.gz"
+    ignore => [".git*","*src/*"],
+    source => "puppet://puppet/files/hadoop-common",
+    recurse => true
   }
-  exec { "tar -xzf /opt/hadoop-common.tar.gz":
-    user => ec2-user,
-    group => ec2-user,
-    cwd => "/opt",
-    creates => "/opt/hadoop-common",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/hadoop-common.tar.gz", 
-    subscribe => File["/opt/hadoop-common.tar.gz"],
-    refreshonly => true
-  }	 
 
-  file { "/opt/hbase.tar.gz":
+  file { "/opt/hbase":
     owner => ec2-user,
     group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/hbase.tar.gz"
+    ignore => [".git*","*src/*"],
+    source => "puppet://puppet/files/hbase",
+    recurse => true
   }
-  exec { "tar -xzf /opt/hbase.tar.gz":
-    user => ec2-user,
-    group => ec2-user,
-    cwd => "/opt",
-    creates => "/opt/hbase",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/hbase.tar.gz", 
-    subscribe => File["/opt/hbase.tar.gz"],
-    refreshonly => true
-  }	 
   
   file { "/opt/hadoop-common/logs":
     mode => 755,
@@ -114,23 +94,13 @@ class install_runtime {
 
 class zookeeper {
   include install_runtime
-  file { "/opt/zookeeper.tar.gz":
+  file { "/opt/zookeeper":
     owner => ec2-user,
     group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/zookeeper.tar.gz"
+    ignore => [".git*","*src/*"],
+    source => "puppet://puppet/files/zookeeper",
+    recurse => true
   }
-  exec { "tar -xzf /opt/zookeeper.tar.gz":
-    user => ec2-user,
-    group => ec2-user,
-    cwd => "/opt",
-    creates => "/opt/zookeeper",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/zookeeper.tar.gz", 
-    subscribe => File["/opt/zookeeper.tar.gz"],
-    refreshonly => true
-  }	 
 
   file { "/opt/zookeeper/conf/zoo.cfg":
     source => "puppet://puppet/files/zoo.cfg",
@@ -164,7 +134,8 @@ class datanode {
   }
   service { "hadoop-datanode":
     ensure => true,
-    pattern => "datanode"
+    pattern => "datanode",
+    enable => true
   }
 }
 
@@ -176,7 +147,8 @@ class tasktracker {
   }
   service { "hadoop-tasktracker":
     ensure => true,
-    pattern => "tasktracker"
+    pattern => "tasktracker",
+    enable => true
   }
 }
 
@@ -188,7 +160,8 @@ class jobtracker {
   }
   service { "hadoop-jobtracker":
     ensure => true,
-    pattern => "jobtracker"
+    pattern => "jobtracker",
+    enable => true
   }
 }
 
@@ -206,7 +179,8 @@ class namenode {
   }
   service { "hadoop-namenode":
     ensure => true,
-    pattern => "namenode"
+    pattern => "namenode",
+    enable => true
   }
 }
 
@@ -218,7 +192,8 @@ class regionserver {
   }
   service { "hbase-regionserver":
     ensure => true,
-    pattern => "regionserver"
+    pattern => "regionserver",
+    enable => true
   }
 }
 
@@ -345,24 +320,7 @@ class devtools {
       subscribe => Exec["wget_m2"]
     }	 
 
-   file { "/opt/m2.tar.gz":
-     owner => ec2-user,
-     group => ec2-user,
-     mode => 750,
-     ignore => ".git*",
-     source => "puppet://puppet/files/m2.tar.gz",
-     notify => Exec["untar_m2"]
-   }
-   exec { "untar_m2":
-     command => "tar -xzf /opt/m2.tar.gz",
-     user => ec2-user,
-     group => ec2-user,
-     cwd => "/home/ec2-user",
-     path => ["/bin","/usr/bin"],
-     onlyif => "test -f /opt/m2.tar.gz", 
-     subscribe => File["/opt/m2.tar.gz"],
-     refreshonly => true
-   }	 
+    include m2
 
 }
 
@@ -490,7 +448,8 @@ class build {
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
      notify => Exec["tarball_zookeeper"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["clone_zookeeper"] ],
-     refreshonly => true
+     refreshonly => true,
+     creates => "/home/ec2-user/build/classes"
    }
    
    exec { "compile_hadoop":
@@ -502,7 +461,8 @@ class build {
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
      notify => Exec["tarball_hadoop"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["checkout_hadoop_append"] ],
-     refreshonly => true
+     refreshonly => true,
+     creates => "/home/ec2-user/hadoop-common/build/classes"
    }
 
    exec { "compile_hbase":
@@ -514,7 +474,8 @@ class build {
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
      notify => Exec["tarball_hbase"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_maven"],Exec["untar_m2"],Exec["checkout_hbase_security"] ],
-     refreshonly => true
+     refreshonly => true,
+     creates => "/home/ec2-user/hbase/target/cached_classpath.txt"
    }
    
    include initscripts
@@ -524,7 +485,7 @@ class make_tarballs {
   include build
 
   exec {"tarball_zookeeper":
-     command => "tar --exclude=\"*.java\" --exclude=\".git*\" -czf /tmp/puppetfiles/zookeeper.tar.gz zookeeper",
+     command => "cp -u -r zookeeper /tmp/puppetfiles",
      cwd => "/home/ec2-user",
      user => "ec2-user",
      group => "ec2-user",
@@ -534,7 +495,7 @@ class make_tarballs {
    }
    
    exec {"tarball_hadoop":
-     command => "tar --exclude=\"*.java\" --exclude=\".git*\" -czf /tmp/puppetfiles/hadoop-common.tar.gz hadoop-common",
+     command => "cp -u -r hadoop-common /tmp/puppetfiles",
      cwd => "/home/ec2-user",
      user => "ec2-user",
      group => "ec2-user",
@@ -544,7 +505,7 @@ class make_tarballs {
    }
 
   exec {"tarball_hbase":
-     command => "tar --exclude=\"*.java\" --exclude=\".git*\" -czf /tmp/puppetfiles/hbase.tar.gz hbase",
+     command => "cp -u -r hbase /tmp/puppetfiles",
      cwd => "/home/ec2-user",
      user => "ec2-user",
      group => "ec2-user",
@@ -589,8 +550,33 @@ class initscripts {
    include regionserver
 }
 
+class m2 {
+
+   file { "/opt/m2.tar.gz":
+     owner => ec2-user,
+     group => ec2-user,
+     mode => 750,
+     ignore => ".git*",
+     source => "puppet://puppet/files/m2.tar.gz",
+     notify => Exec["untar_m2"]
+   }
+   exec { "untar_m2":
+     command => "tar -xzf /opt/m2.tar.gz",
+     user => ec2-user,
+     group => ec2-user,
+     cwd => "/home/ec2-user",
+     path => ["/bin","/usr/bin"],
+     onlyif => "test -f /opt/m2.tar.gz", 
+     subscribe => File["/opt/m2.tar.gz"],
+     refreshonly => true
+   }	 
+}
+
 node default {
 # slave daemons.
+
+  include m2
+  
   include datanode
   include tasktracker
   include regionserver
