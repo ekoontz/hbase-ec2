@@ -83,25 +83,6 @@ class install_runtime {
     subscribe => File["/opt/hbase.tar.gz"],
     refreshonly => true
   }	 
-
-  file { "/opt/m2.tar.gz":
-    owner => ec2-user,
-    group => ec2-user,
-    mode => 750,
-    ignore => ".git*",
-    source => "puppet://puppet/files/m2.tar.gz",
-    notify => Exec["untar_m2"]
-  }
-  exec { "untar_m2":
-    command => "tar -xzf /opt/m2.tar.gz",
-    user => ec2-user,
-    group => ec2-user,
-    cwd => "/home/ec2-user",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/m2.tar.gz", 
-    subscribe => File["/opt/m2.tar.gz"],
-    refreshonly => true
-  }	 
   
   file { "/opt/hadoop-common/logs":
     mode => 755,
@@ -248,7 +229,7 @@ class master {
   }
   service { "hbase-master":
     ensure => true,
-    pattern => "master",
+    pattern => "hbase-ec2-user-master",
     enable => true
   }
 }
@@ -362,7 +343,27 @@ class devtools {
       path => ["/bin","/usr/bin"],
       subscribe => Exec["wget_m2"]
     }	 
- }
+
+   file { "/opt/m2.tar.gz":
+     owner => ec2-user,
+     group => ec2-user,
+     mode => 750,
+     ignore => ".git*",
+     source => "puppet://puppet/files/m2.tar.gz",
+     notify => Exec["untar_m2"]
+   }
+   exec { "untar_m2":
+     command => "tar -xzf /opt/m2.tar.gz",
+     user => ec2-user,
+     group => ec2-user,
+     cwd => "/home/ec2-user",
+     path => ["/bin","/usr/bin"],
+     onlyif => "test -f /opt/m2.tar.gz", 
+     subscribe => File["/opt/m2.tar.gz"],
+     refreshonly => true
+   }	 
+
+}
 
  class sources {
 
@@ -491,16 +492,6 @@ class build {
      refreshonly => true
    }
    
-   exec {"tarball_zookeeper":
-     command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/zookeeper.tar.gz zookeeper",
-     cwd => "/home/ec2-user",
-     user => "ec2-user",
-     group => "ec2-user",
-     path => ["/bin","/usr/bin"],
-     subscribe => Exec["compile_zookeeper"],
-     refreshonly => true
-   }
-
    exec { "compile_hadoop":
      user => "ec2-user",
      group => "ec2-user",
@@ -510,16 +501,6 @@ class build {
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
      notify => Exec["tarball_hadoop"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["checkout_hadoop_append"] ],
-     refreshonly => true
-   }
-   
-   exec {"tarball_hadoop":
-     command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/hadoop-common.tar.gz hadoop-common",
-     cwd => "/home/ec2-user",
-     user => "ec2-user",
-     group => "ec2-user",
-     path => ["/bin","/usr/bin"],
-     subscribe => Exec["compile_hadoop"],
      refreshonly => true
    }
 
@@ -535,8 +516,34 @@ class build {
      refreshonly => true
    }
    
-   exec {"tarball_hbase":
-     command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/hbase.tar.gz hbase",
+   include initscripts
+}
+
+class make_tarballs {
+  include build
+
+  exec {"tarball_zookeeper":
+     command => "tar --exclude=\"*.java\" --exclude=\".git*\" -czf /tmp/puppetfiles/zookeeper.tar.gz zookeeper",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"],
+     subscribe => Exec["compile_zookeeper"],
+     refreshonly => true
+   }
+   
+   exec {"tarball_hadoop":
+     command => "tar --exclude=\"*.java\" --exclude=\".git*\" -czf /tmp/puppetfiles/hadoop-common.tar.gz hadoop-common",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"],
+     subscribe => Exec["compile_hadoop"],
+     refreshonly => true
+   }
+
+  exec {"tarball_hbase":
+     command => "tar --exclude=\"*.java\" --exclude=\".git*\" -czf /tmp/puppetfiles/hbase.tar.gz hbase",
      cwd => "/home/ec2-user",
      user => "ec2-user",
      group => "ec2-user",
@@ -544,9 +551,9 @@ class build {
      subscribe => Exec["compile_hbase"],
      refreshonly => true
    }
-   include initscripts
 }
- 
+
+
 class initscripts {
   exec {"initscripts":
     command => "cp -u /home/ec2-user/hbase-ec2/lib/initscripts/* /tmp/puppetfiles",
@@ -563,12 +570,19 @@ class initscripts {
 }
 
  class puppetmaster {
-   include build
+   include make_tarballs
+
  }
 
  node "puppet" {
    include puppetmaster
 
+   include namenode
+   include datanode
+   include zookeeper
+ }
+
+ node "save" {
 #master daemons.
    include jobtracker
    include namenode
