@@ -1,5 +1,5 @@
 sudo rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/x86_64/epel-release-5-4.noarch.rpm
-sudo yum -y install puppet-server puppet git emacs
+sudo yum -y install puppet-server puppet git
 mkdir /tmp/puppetfiles
 git clone git://github.com/ekoontz/hbase-ec2.git
 cd hbase-ec2
