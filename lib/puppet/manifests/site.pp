@@ -30,28 +30,18 @@ class install_runtime {
     mode => 755,
     group => wheel
   }
-  file { "/opt/jre.tar.gz":
+  file { "/opt/jre1.6.0_22":
     owner => ec2-user,
     group => ec2-user,
     mode => 755,
-    ignore => ".git*",
-    source => "puppet://puppet/files/jre.tar.gz"
+    source => "puppet://puppet/files/jre1.6.0_22",
+    recurse => true
   }
-  exec { "tar -xzf /opt/jre.tar.gz":
-    user => "ec2-user",
-    group => "ec2-user",
-    cwd => "/opt",
-    creates => "/opt/jre1.6.0_22",
-    path => ["/bin","/usr/bin"],
-    onlyif => "test -f /opt/jre.tar.gz", 
-    subscribe => File["/opt/jre.tar.gz"],
-    refreshonly => true
-  }	
 
   file { "/opt/hadoop-common":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","/opt/hadoop-common/src/*","*.java"],
+    ignore => [".git*","/opt/hadoop-common/src/*","*.java","*.class"],
     source => "puppet://puppet/files/hadoop-common",
     recurse => true
   }
@@ -59,7 +49,7 @@ class install_runtime {
   file { "/opt/hbase":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","/opt/hbase/src/*","*.java"],
+    ignore => [".git*","/opt/hbase/src/*","*.java","*.class"],
     source => "puppet://puppet/files/hbase",
     recurse => true
   }
@@ -97,7 +87,7 @@ class zookeeper {
   file { "/opt/zookeeper":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","*/src/*","*.java"],
+    ignore => [".git*","*/src/*","*.java","*.class"],
     source => "puppet://puppet/files/zookeeper",
     recurse => true
   }
@@ -294,13 +284,12 @@ class devtools {
     }
 
     exec {"tarball_jre":
-	command => "tar  --exclude=\".git*\" -czf /tmp/puppetfiles/jre.tar.gz jre1.6.0_22",
+	command => "cp -r -u jre1.6.0_22 /tmp/puppetfiles",
         cwd => "/home/ec2-user",
         user => "ec2-user",
         group => "ec2-user",
         path => ["/bin","/usr/bin"],
-        subscribe => Exec["sh_jre"],
-        creates => "/tmp/puppetfiles/jre.tar.gz"
+        subscribe => Exec["sh_jre"]
     }
 
     exec { "wget_m2":
