@@ -15,9 +15,10 @@ RETVAL=0
 export JAVA_HOME=/opt/jre1.6.0_22
 export PATH=$JAVA_HOME/bin:$PATH
 export ZOOKEEPER_USER=ec2-user
+export CLASSPATH=/opt/zookeeper/build/zookeeper-3.4.0.jar
 
 start() {
-        sudo -u $ZOOKEEPER_USER JAVA_HOME=$JAVA_HOME PATH=$JAVA_HOME/bin:$PATH /opt/zookeeper/bin/zkServer.sh start
+        sudo -u $ZOOKEEPER_USER JAVA_HOME=$JAVA_HOME CLASSPATH=$CLASSPATH PATH=$JAVA_HOME/bin:$PATH /opt/zookeeper/bin/zkServer.sh start
 	RETVAL=$?
 	echo
 }

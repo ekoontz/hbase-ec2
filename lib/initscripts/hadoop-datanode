@@ -13,11 +13,11 @@
 RETVAL=0
 #fixme: use system env.
 export JAVA_HOME=/opt/jre1.6.0_22
-export PATH=$JAVA_HOME/bin:$PATH
 export HADOOP_USER=ec2-user
+export HADOOP_CLASSPATH=/opt/hadoop-common/build/hadoop-core-0.20.104.3-append-SNAPSHOT.jar
 
 start() {
-	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME /opt/hadoop-common/bin/hadoop-daemon.sh start datanode 
+	sudo -u $HADOOP_USER JAVA_HOME=$JAVA_HOME HADOOP_CLASSPATH=$HADOOP_CLASSPATH /opt/hadoop-common/bin/hadoop-daemon.sh start datanode
 	RETVAL=$?
 	echo
 }

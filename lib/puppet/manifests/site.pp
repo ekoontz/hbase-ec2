@@ -161,7 +161,7 @@ class namenode {
       user => ec2-user,
       group => ec2-user,
       creates => "/tmp/hadoop-ec2-user/dfs/name",
-      environment => ["JAVA_HOME=/opt/jre1.6.0_22"]
+      environment => ["JAVA_HOME=/opt/jre1.6.0_22","HADOOP_CLASSPATH=/opt/hadoop-common/build/hadoop-core-0.20.104.3-append-SNAPSHOT.jar"]
   }
   file { "/etc/init.d/hadoop-namenode":
     mode => 755,
