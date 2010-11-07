@@ -36,26 +36,7 @@ class TestCreateImage < Test::Unit::TestCase
                                      puts "#{master_hostname}: verifying that sshing works.."
                                      HCluster::until_ssh_able([instance],0,"ec2-user")
                                      puts "..ok."
-                                     HCluster::ssh_to(master_hostname,
-                                                      "wget -O jdk.bin http://ekoontz-tarballs.s3.amazonaws.com/jdk-6u22-linux-x64.bin && sh ./jdk.bin",
-                                                      lambda{|line,channel|
-                                                        if line =~ /Press Enter to continue/
-                                                          channel.send_data "\n"
-                                                        end
-                                                      },
-                                                      HCluster.consume_output,
-                                                      nil,nil,
-                                                      "ec2-user")
                                      HCluster::scp_to(master_hostname,"./lib/puppet/master.sh","/home/ec2-user/master.sh","ec2-user")
-
-                                     sync_with_dev = false
-                                     if (sync_with_dev == true)
-                                       #copy various files from our dev directory directly to the puppetmaster.
-                                       HCluster::scp_to(master_hostname,"./lib/puppet/zk.sh","/home/ec2-user/zk.sh","ec2-user")
-                                       HCluster::scp_to(master_hostname,"./lib/puppet/manifests/site.pp","/home/ec2-user/hbase-ec2/lib/puppet","ec2-user")
-                                       #other files to scp....
-                                     end
-
                                      HCluster::ssh_to(master_hostname,"sh /home/ec2-user/master.sh",
                                                       HCluster.echo_stdout,
                                                       HCluster.echo_stderr,
@@ -78,6 +59,8 @@ class TestCreateImage < Test::Unit::TestCase
     
     #set up slaves.
     puppetmaster_private_ip = @master.privateIpAddress
+    
+    @slaves = []
 
     2.times { |i|
       launch = HCluster::do_launch({
@@ -108,10 +91,14 @@ class TestCreateImage < Test::Unit::TestCase
                                      }
                                    },"start_slave_"+i.to_s)
       assert(launch[0])     
+      @slaves.push launch[0]
     }
 
     #wait for hbase to come up, and run some hadoop and hbase tests.
-    
+    puts "master hostname " + @master.dnsName + " ; private IP: " + puppetmaster_private_ip
+    @slaves.each {|slave|
+      puts " slave: " + slave.dnsName
+    }
 
   end
 end
