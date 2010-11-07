@@ -41,17 +41,19 @@ class install_runtime {
   file { "/opt/hadoop-common":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","/opt/hadoop-common/src/*","*.java","*.class"],
+    ignore => [".git*",'src',"*.class",'jdiff'],
     source => "puppet://puppet/files/hadoop-common",
-    recurse => true
+    recurse => true,
+    purge => true
   }
 
   file { "/opt/hbase":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","/opt/hbase/src/*","*.java","*.class"],
+    ignore => [".git*",'src',"*.class"],
     source => "puppet://puppet/files/hbase",
-    recurse => true
+    recurse => true,
+    purge => true
   }
   
   file { "/opt/hadoop-common/logs":
@@ -87,7 +89,7 @@ class zookeeper {
   file { "/opt/zookeeper":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*","*/src/*","*.java","*.class"],
+    ignore => [".git*",'src',"*.class"],
     source => "puppet://puppet/files/zookeeper",
     recurse => true
   }
