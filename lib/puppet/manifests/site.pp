@@ -33,7 +33,7 @@ class install_runtime {
   file { "/opt/jre1.6.0_22":
     owner => ec2-user,
     group => ec2-user,
-    mode => 755,
+    ignore => ['man'],
     source => "puppet://puppet/files/jre1.6.0_22",
     recurse => true
   }
@@ -41,7 +41,7 @@ class install_runtime {
   file { "/opt/hadoop-common":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*",'src',"*.class",'jdiff'],
+    ignore => [".git*",'src',"*.class",'jdiff','patches'],
     source => "puppet://puppet/files/hadoop-common",
     recurse => true,
     purge => true
@@ -89,7 +89,7 @@ class zookeeper {
   file { "/opt/zookeeper":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*",'src',"*.class"],
+    ignore => [".git*",'src',"*.class",'docs'],
     source => "puppet://puppet/files/zookeeper",
     recurse => true
   }
