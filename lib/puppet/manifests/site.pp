@@ -291,10 +291,10 @@ class devtools {
       creates => "/home/ec2-user/jre1.6.0_22",
       path => ["/bin","/usr/bin"],
       subscribe => Exec["wget_jre"],
-      notify => Exec["tarball_jre"]
+      notify => Exec["stage_jre"]
     }
 
-    exec {"tarball_jre":
+    exec {"stage_jre":
 	command => "cp -r -u jre1.6.0_22 /tmp/puppetfiles",
         cwd => "/home/ec2-user",
         user => "ec2-user",
@@ -405,7 +405,7 @@ class devtools {
       group => "ec2-user",
       creates => "/tmp/puppetfiles/zoo.cfg",
       path => ["/bin"],
-      notify => Exec["tarball_zookeeper"]
+      notify => Exec["stage_zookeeper"]
     }
     exec { "hdfs_conf":
       command => "cp /home/ec2-user/hbase-ec2/lib/puppet/hdfs-site.xml /tmp/puppetfiles",
@@ -413,7 +413,7 @@ class devtools {
       group => "ec2-user",
       creates => "/tmp/puppetfiles/hdfs-site.xml",
       path => ["/bin"],
-      notify => Exec["tarball_hadoop"]
+      notify => Exec["stage_hadoop"]
     }
     exec { "mapred_conf":
       command => "cp /home/ec2-user/hbase-ec2/lib/puppet/mapred-site.xml /tmp/puppetfiles",
@@ -421,7 +421,7 @@ class devtools {
       group => "ec2-user",
       creates => "/tmp/puppetfiles/mapred-site.xml",
       path => ["/bin"],
-      notify => Exec["tarball_hadoop"]
+      notify => Exec["stage_hadoop"]
     }
     exec { "hbase_conf":
       command => "cp /home/ec2-user/hbase-ec2/lib/puppet/hbase-site.xml /tmp/puppetfiles",
@@ -429,7 +429,7 @@ class devtools {
       group => "ec2-user",
       creates => "/tmp/puppetfiles/hbase-site.xml",
       path => ["/bin"],
-      notify => Exec["tarball_hbase"]
+      notify => Exec["stage_hbase"]
     }
 
  }
@@ -443,18 +443,19 @@ class lily_sources {
     cwd => "/home/ec2-user",
     onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/solr"],
     path => ["/bin","/usr/bin"],
-    creates => "/home/ec2-user/solr",
-    notify => Exec["checkout_1_4_1"]
+#    creates => "/home/ec2-user/solr",
+    notify => Exec["checkout_solr_1_4_1"]
   }
   
-  exec { "checkout_1_4_1":
+  exec { "checkout_solr_1_4_1":
     command => "git checkout release-1.4.1",
     user => "ec2-user",
     group => "ec2-user",
     cwd => "/home/ec2-user/solr",
     onlyif => "test -x /usr/bin/git",
     path => ["/bin","/usr/bin"],
-    subscribe => Exec["solr"]
+    subscribe => Exec["solr"],
+    notify => Exec["compile_solr"]
   }
 
   exec { "lily":
@@ -482,7 +483,7 @@ class build {
      cwd => "/home/ec2-user/zookeeper",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-     notify => Exec["tarball_zookeeper"],
+     notify => Exec["stage_zookeeper"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["clone_zookeeper"] ],
      refreshonly => true,
      creates => "/home/ec2-user/build/classes"
@@ -495,7 +496,7 @@ class build {
      cwd => "/home/ec2-user/hadoop-common",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-     notify => Exec["tarball_hadoop"],
+     notify => Exec["stage_hadoop"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["checkout_hadoop_append"] ],
      refreshonly => true,
      creates => "/home/ec2-user/hadoop-common/build/classes"
@@ -508,10 +509,23 @@ class build {
      cwd => "/home/ec2-user/hbase",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-     notify => Exec["tarball_hbase"],
+     notify => Exec["stage_hbase"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_maven"],Exec["untar_m2"],Exec["checkout_hbase_security"] ],
      refreshonly => true,
      creates => "/home/ec2-user/hbase/target/cached_classpath.txt"
+   }
+
+   exec {"compile_solr":
+     user => "ec2-user",
+     group => "ec2-user",
+     command => "ant dist",
+     cwd => "/home/ec2-user/solr",
+     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-ant-1.8.1/bin","/bin","/usr/bin"],
+     environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
+     notify => Exec["stage_solr"],
+     subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["checkout_solr_1_4_1"] ],
+     refreshonly => true,
+     creates => "/home/ec2-user/solr/build/classes"
    }
    
    include initscripts
@@ -520,7 +534,7 @@ class build {
 class make_tarballs {
   include build
 
-  exec {"tarball_zookeeper":
+  exec {"stage_zookeeper":
      command => "cp -u -r zookeeper /tmp/puppetfiles",
      cwd => "/home/ec2-user",
      user => "ec2-user",
@@ -530,7 +544,7 @@ class make_tarballs {
      refreshonly => true
    }
    
-   exec {"tarball_hadoop":
+   exec {"stage_hadoop":
      command => "cp -u -r hadoop-common /tmp/puppetfiles",
      cwd => "/home/ec2-user",
      user => "ec2-user",
@@ -540,7 +554,7 @@ class make_tarballs {
      refreshonly => true
    }
 
-  exec {"tarball_hbase":
+  exec {"stage_hbase":
      command => "cp -u -r hbase /tmp/puppetfiles",
      cwd => "/home/ec2-user",
      user => "ec2-user",
