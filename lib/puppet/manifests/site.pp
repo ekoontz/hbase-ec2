@@ -211,6 +211,42 @@ class master {
   }
 }
 
+class lily_server {
+  include install_runtime
+
+
+  #lily configuration:
+  # see: http://docs.outerthought.org/lily-docs-current/414-lily/432-lily.html
+  file { "/opt/lily/cr/process/server/conf/general/hbase.xml":
+    source => "puppet://puppet/files/conf/lily/general/hbase.xml",
+    mode => 644,
+    owner => ec2-user
+  }
+  file { "/opt/lily/cr/process/server/conf/general/mapreduce.xml":
+    source => "puppet://puppet/files/conf/lily/general/mapreduce.xml",
+    mode => 644,
+    owner => ec2-user
+  }
+  file { "/opt/lily/cr/process/server/conf/general/metrics.xml":
+    source => "puppet://puppet/files/conf/lily/general/metrics.xml",
+    mode => 644,
+    owner => ec2-user
+  }
+  file { "/opt/lily/cr/process/server/conf/general/zookeeper.xml":
+    source => "puppet://puppet/files/conf/lily/general/zookeeper.xml",
+    mode => 644,
+    owner => ec2-user
+  }
+  file { "/opt/lily/cr/process/server/conf/repository/repository.xml":
+    source => "puppet://puppet/files/conf/lily/repository/repository.xml",
+    mode => 644,
+    owner => ec2-user
+  }
+
+  #service {
+  # }
+}
+
 class devtools {
     include base
 # note that we don't 'include install_runtime' here since
@@ -459,13 +495,14 @@ class lily_sources {
   }
 
   exec { "lily":
-    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/tags/RELEASE_0_2_1 lily",
+    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/trunk lily",
     user => "ec2-user",
     group => "ec2-user",
     cwd => "/home/ec2-user",
     onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/lily"],
     path => ["/bin","/usr/bin"],
-    creates => "/home/ec2-user/lily"
+    creates => "/home/ec2-user/lily",
+    notify => Exec["compile_lily"]
   }
 
   
@@ -505,7 +542,7 @@ class build {
    exec { "compile_hbase":
      user => "ec2-user",
      group => "ec2-user",
-     command => "mvn compile dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt jar:jar",
+     command => "mvn dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt jar:jar",
      cwd => "/home/ec2-user/hbase",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
@@ -526,6 +563,19 @@ class build {
      subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["checkout_solr_1_4_1"] ],
      refreshonly => true,
      creates => "/home/ec2-user/solr/build"
+   }
+
+   exec {"compile_lily":
+     user => "ec2-user",
+     group => "ec2-user",
+     command => "mvn jar:jar",
+     cwd => "/home/ec2-user/lily",
+     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
+     environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
+     notify => Exec["stage_lily"],
+     subscribe => [ Exec["untar_jdk"],Exec["untar_maven"],Exec["lily"] ],
+     refreshonly => true
+#     creates => "/home/ec2-user/build"
    }
    
    include initscripts
@@ -574,6 +624,15 @@ class make_tarballs {
      refreshonly => true
    }
 
+   exec {"stage_lily":
+     command => "cp -u -r lily /tmp/puppetfiles",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"],
+     subscribe => Exec["compile_lily"],
+     refreshonly => true
+   }
 
 }
 
