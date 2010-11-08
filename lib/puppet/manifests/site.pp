@@ -55,6 +55,15 @@ class install_runtime {
     recurse => true,
     purge => true
   }
+
+  file { "/opt/solr":
+    owner => ec2-user,
+    group => ec2-user,
+    ignore => [".git*",'src',"*.class",'jdiff','patches'],
+    source => "puppet://puppet/files/solr",
+    recurse => true,
+    purge => true
+  }
   
   file { "/opt/hadoop-common/logs":
     mode => 755,
@@ -540,6 +549,18 @@ class make_tarballs {
      subscribe => Exec["compile_hbase"],
      refreshonly => true
    }
+
+  exec {"stage_solr":
+     command => "cp -u -r solr /tmp/puppetfiles",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"],
+     subscribe => Exec["compile_solr"],
+     refreshonly => true
+   }
+
+
 }
 
 
