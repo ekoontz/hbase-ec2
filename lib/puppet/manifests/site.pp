@@ -22,7 +22,7 @@ class install_runtime {
     group => root,
     mode => 440,
     source => "puppet://puppet/files/sudoers",
-    backup => ".sudoers-bak"
+    backup => ".bak"
   }
   
   file { "/opt":
@@ -358,7 +358,6 @@ class devtools {
       #, notify => Class["compile_hadoop"]
     }            
 
-
     exec { "clone_hbase":
       command => "git clone git://github.com/trendmicro/hbase.git",
       user => "ec2-user",
@@ -426,10 +425,33 @@ class devtools {
 
  }
 
+class lily_sources {
+  package {"subversion": ensure => installed}
+  exec { "solr":
+      command => "git clone git://github.com/apache/solr.git",
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/home/ec2-user",
+      onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/solr"],
+      path => ["/bin","/usr/bin"],
+      creates => "/home/ec2-user/solr"
+  }
+  exec { "lily":
+    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject",
+    user => "ec2-user",
+    group => "ec2-user",
+    cwd => "/home/ec2-user",
+    onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/lily"],
+    path => ["/bin","/usr/bin"],
+    creates => "/home/ec2-user/lily"
+  }
+}
+ 
 class build {
    include devtools
    include sources
-   
+   include lily_sources
+  
    exec { "compile_zookeeper":
      user => "ec2-user",
      group => "ec2-user",
