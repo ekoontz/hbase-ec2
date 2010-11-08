@@ -542,7 +542,7 @@ class build {
    exec { "compile_hbase":
      user => "ec2-user",
      group => "ec2-user",
-     command => "mvn dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt jar:jar",
+     command => "mvn compile dependency:build-classpath -Dmdep.outputFile=target/cached_classpath.txt jar:jar",
      cwd => "/home/ec2-user/hbase",
      path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
