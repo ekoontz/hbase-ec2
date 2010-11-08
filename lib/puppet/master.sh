@@ -9,9 +9,17 @@ sudo cp lib/puppet/manifests/site.pp /etc/puppet/manifests/
 sudo cp lib/puppet/fileserver.conf /etc/puppet
 
 export PUPPET_MASTER_IP=`/sbin/ifconfig eth0 | grep "inet addr" | cut -d: -f2-2 | cut -d' ' -f1`
-echo "$PUPPET_MASTER_IP    puppet" >> /tmp/hosts
-echo "$PUPPET_MASTER_IP    puppet namenode zookeeper jobtracker master" >> /tmp/puppetfiles/hosts
-sudo cp /tmp/hosts /etc
+echo "127.0.0.1   localhost
+255.255.255.255   broadcasthost
+::1               localhost.localdomain localhost 
+127.0.0.1         localhost 
+127.0.0.1         localhost.localdomain localhost
+$PUPPET_MASTER_IP    puppet
+" > /tmp/puppetfiles/hosts
+
+#FIXME: move these to puppet-managed files.
+echo "$PUPPET_MASTER_IP    namenode zookeeper jobtracker master" >> /tmp/puppetfiles/hosts
+sudo cp /tmp/puppetfiles/hosts /etc
 
 sudo /etc/init.d/puppetmaster start
 sudo /etc/init.d/puppet start
