@@ -525,7 +525,7 @@ class build {
      notify => Exec["stage_solr"],
      subscribe => [ Exec["untar_jdk"],Exec["untar_ant"],Exec["checkout_solr_1_4_1"] ],
      refreshonly => true,
-     creates => "/home/ec2-user/solr/build/classes"
+     creates => "/home/ec2-user/solr/build"
    }
    
    include initscripts
