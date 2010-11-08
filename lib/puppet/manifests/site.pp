@@ -428,16 +428,28 @@ class devtools {
 class lily_sources {
   package {"subversion": ensure => installed}
   exec { "solr":
-      command => "git clone git://github.com/apache/solr.git",
-      user => "ec2-user",
-      group => "ec2-user",
-      cwd => "/home/ec2-user",
-      onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/solr"],
-      path => ["/bin","/usr/bin"],
-      creates => "/home/ec2-user/solr"
+    command => "git clone git://github.com/apache/solr.git",
+    user => "ec2-user",
+    group => "ec2-user",
+    cwd => "/home/ec2-user",
+    onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/solr"],
+    path => ["/bin","/usr/bin"],
+    creates => "/home/ec2-user/solr",
+    notify => Exec["checkout_1_4_1"]
   }
+  
+  exec { "checkout_1_4_1":
+    command => "git checkout release-1.4.1",
+    user => "ec2-user",
+    group => "ec2-user",
+    cwd => "/home/ec2-user/solr",
+    onlyif => "test -x /usr/bin/git",
+    path => ["/bin","/usr/bin"],
+    subscribe => Exec["solr"]
+  }
+
   exec { "lily":
-    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject",
+    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/tags/RELEASE_0_2_1 lily",
     user => "ec2-user",
     group => "ec2-user",
     cwd => "/home/ec2-user",
@@ -445,6 +457,8 @@ class lily_sources {
     path => ["/bin","/usr/bin"],
     creates => "/home/ec2-user/lily"
   }
+
+  
 }
  
 class build {
