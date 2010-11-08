@@ -402,11 +402,15 @@ module Hadoop
     def launchp( options = {} )
       #set up a puppet master with specified number of slaves (default=2).
 
-      #order of precedence is : supplied method options > this object's options > defaults (as specified below)
+      #order of precedence is : 
+      # supplied method options > this object's options > defaults (as specified below)
+      if @options == nil
+        @options = {}
+      end
       options = {
         :slaves => 2,
         :ami => (@image && @image["imageId"])
-      }.merge(self.options).merge(options)
+      }.merge(@options).merge(options)
 
       #Note: although 2 slaves are specified, in reality there will 
       # be 3 slaves since the master will also run slave.sh on itself.
@@ -417,29 +421,8 @@ module Hadoop
                                       :instance_type => "m1.large",
                                       :on_boot => lambda{|instance|
                                         master_hostname = instance.dnsName
-                                        puts "#{master_hostname}: verifying that sshing works.."
                                         HCluster::until_ssh_able([instance],0,"ec2-user")
-                                        puts "..ok."
-                                        HCluster::ssh_to(master_hostname,
-                                                         "wget -O jdk.bin http://ekoontz-tarballs.s3.amazonaws.com/jdk-6u22-linux-x64.bin && sh ./jdk.bin",
-                                                         lambda{|line,channel|
-                                                           if line =~ /Press Enter to continue/
-                                                             channel.send_data "\n"
-                                                           end
-                                                         },
-                                                         HCluster.consume_output,
-                                                         nil,nil,
-                                                         "ec2-user")
                                         HCluster::scp_to(master_hostname,"./lib/puppet/master.sh","/home/ec2-user/master.sh","ec2-user")
-                                        
-                                        sync_with_dev = false
-                                        if (sync_with_dev == true)
-                                          #copy various files from our dev directory directly to the puppetmaster.
-                                          HCluster::scp_to(master_hostname,"./lib/puppet/zk.sh","/home/ec2-user/zk.sh","ec2-user")
-                                          HCluster::scp_to(master_hostname,"./lib/puppet/manifests/site.pp","/home/ec2-user/hbase-ec2/lib/puppet","ec2-user")
-                                          #other files to scp....
-                                        end
-                                        
                                         HCluster::ssh_to(master_hostname,"sh /home/ec2-user/master.sh",
                                                          HCluster.echo_stdout,
                                                          HCluster.echo_stderr,
@@ -494,6 +477,7 @@ module Hadoop
                                          @slaves.push instance
                                        }
                                      },"start_slave_"+i.to_s)
+        @slaves.push launch[0]
       }
 
 
@@ -756,6 +740,10 @@ module Hadoop
     
     def dnsName
       master.dnsName
+    end
+
+    def slaves 
+      @slaves
     end
     
     def ssh_input
