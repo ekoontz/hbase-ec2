@@ -357,6 +357,8 @@ module Hadoop
         if ((retval2.size == 0) && (search_all_visible_images == true))
           options.delete(:owner_id)
           puts "image named '#{image_label}' not found in owner #{@@owner_id}'s images; looking in all images (may take a while..)"
+          #FIXME: why is searching for image labels so slow? 
+          # (takes about 10 seconds to lookup a label's AMI).
           retval = @@shared_base_object.describe_images(options)
           #filter by image_label
           retval2 = retval['imagesSet']['item'].detect{
