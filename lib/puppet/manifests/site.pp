@@ -213,38 +213,69 @@ class master {
 
 class lily_server {
   include install_runtime
+  include stage_lily
+  
+  file { "/opt/lily":
+    owner => ec2-user,
+    group => ec2-user,
+    ignore => [".git*",".svn",'src',"*.class",'docs'],
+    source => "puppet://puppet/files/lily",
+    recurse => true
+  }
 
+  file { "/etc/init.d/lily":
+    mode => 755,
+    source => "puppet://puppet/files/lily_server"
+  }
+
+  exec { "mkdir -p /opt/lily/conf/general":
+    user => ec2-user,
+    group => ec2-user,
+    creates => "/opt/lily/conf/general",
+    path => ["/bin","/usr/bin"]
+  }	 
+
+  exec { "mkdir -p /opt/lily/conf/repository":
+    user => ec2-user,
+    group => ec2-user,
+    creates => "/opt/lily/conf/repository",
+    path => ["/bin","/usr/bin"]
+  }	 
 
   #lily configuration:
   # see: http://docs.outerthought.org/lily-docs-current/414-lily/432-lily.html
-  file { "/opt/lily/cr/process/server/conf/general/hbase.xml":
+  file { "/opt/lily/conf/general/hbase.xml":
     source => "puppet://puppet/files/conf/lily/general/hbase.xml",
     mode => 644,
     owner => ec2-user
   }
-  file { "/opt/lily/cr/process/server/conf/general/mapreduce.xml":
+  file { "/opt/lily/conf/general/mapreduce.xml":
     source => "puppet://puppet/files/conf/lily/general/mapreduce.xml",
     mode => 644,
     owner => ec2-user
   }
-  file { "/opt/lily/cr/process/server/conf/general/metrics.xml":
+  file { "/opt/lily/conf/general/metrics.xml":
     source => "puppet://puppet/files/conf/lily/general/metrics.xml",
     mode => 644,
     owner => ec2-user
   }
-  file { "/opt/lily/cr/process/server/conf/general/zookeeper.xml":
+  file { "/opt/lily/conf/general/zookeeper.xml":
     source => "puppet://puppet/files/conf/lily/general/zookeeper.xml",
     mode => 644,
     owner => ec2-user
   }
-  file { "/opt/lily/cr/process/server/conf/repository/repository.xml":
+  file { "/opt/lily/conf/repository/repository.xml":
     source => "puppet://puppet/files/conf/lily/repository/repository.xml",
     mode => 644,
     owner => ec2-user
   }
 
-  #service {
-  # }
+  service { "lily":
+    ensure => true,
+    pattern => "lily",
+    enable => true
+  }
+
 }
 
 class devtools {
@@ -291,6 +322,25 @@ class devtools {
       creates => "/home/ec2-user/apache-maven-3.0",
       path => ["/bin","/usr/bin"],
       onlyif => "test -f /home/ec2-user/apache-maven-3.0-bin.tar.gz"
+    }	 
+
+    exec { "wget_maven_2":
+      command => "wget http://ekoontz-tarballs.s3.amazonaws.com/apache-maven-2.2.1-bin.tar.gz",
+      user => ec2-user,
+      group => ec2-user,
+      cwd => "/home/ec2-user",
+      creates => "/home/ec2-user/apache-maven-2.2.1-bin.tar.gz",
+      path => ["/bin","/usr/bin"],
+      notify => Exec["untar_maven_2"]
+    }
+    exec { "untar_maven_2":
+      command => "tar -xzf /home/ec2-user/apache-maven-2.2.1-bin.tar.gz",
+      user => "ec2-user",
+      group => "ec2-user",
+      cwd => "/home/ec2-user",
+      creates => "/home/ec2-user/apache-maven-2.2.1",
+      path => ["/bin","/usr/bin"],
+      subscribe => Exec["wget_maven_2"]
     }	 
 
     exec { "wget http://ekoontz-tarballs.s3.amazonaws.com/apache-ant-1.8.1-bin.tar.bz2":
@@ -495,7 +545,8 @@ class lily_sources {
   }
 
   exec { "lily":
-    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/trunk lily",
+    #    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/trunk lily",
+    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/tags/RELEASE_0_2_1 lily",
     user => "ec2-user",
     group => "ec2-user",
     cwd => "/home/ec2-user",
@@ -570,12 +621,11 @@ class build {
      group => "ec2-user",
      command => "mvn jar:jar",
      cwd => "/home/ec2-user/lily",
-     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-3.0/bin","/bin","/usr/bin"],
+     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-2.2.1/bin","/bin","/usr/bin"],
      environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-     notify => Exec["stage_lily"],
-     subscribe => [ Exec["untar_jdk"],Exec["untar_maven"],Exec["lily"] ],
-     refreshonly => true
-#     creates => "/home/ec2-user/build"
+     subscribe => [ Exec["untar_jdk"],Exec["untar_maven_2"],Exec["lily"] ],
+     refreshonly => true,
+     notify => Exec["stage_lily"]
    }
    
    include initscripts
@@ -623,7 +673,9 @@ class make_tarballs {
      subscribe => Exec["compile_solr"],
      refreshonly => true
    }
+}
 
+class stage_lily {
    exec {"stage_lily":
      command => "cp -u -r lily /tmp/puppetfiles",
      cwd => "/home/ec2-user",
@@ -632,6 +684,13 @@ class make_tarballs {
      path => ["/bin","/usr/bin"],
      subscribe => Exec["compile_lily"],
      refreshonly => true
+   }
+   exec {"stage_lily_config":
+     command => "mkdir -p /tmp/puppetfiles/conf && cp -r -u /home/ec2-user/hbase-ec2/lib/lily/* /tmp/puppetfiles/conf/lily",
+     cwd => "/home/ec2-user",
+     user => "ec2-user",
+     group => "ec2-user",
+     path => ["/bin","/usr/bin"]
    }
 
 }
@@ -658,12 +717,20 @@ class initscripts {
 
  node "puppet" {
    include puppetmaster
+
    #master daemons.
+   include zookeeper
+
+   #hadoop
    include jobtracker
    include namenode
-   include zookeeper
+
+   #hbase
    include master
 
+   #lily
+   include lily_server
+   
 # we will economize by running all daemons (both masters and slaves)
 # on the puppetmaster host.
    include datanode
