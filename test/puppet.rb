@@ -18,15 +18,14 @@ class TestCreateImage < Test::Unit::TestCase
 
     #required options:
     # for now, require a specific AMI: (Amazon-branded CentOS 5 variant).
-    assert(@@global_himg.options[:base_image_name] == "ami-38c33651")
+    assert(@@global_himg.options[:base_image_label] == "amzn-ami-0.9.9-beta.x86_64-ebs")
     assert(@@global_himg.options[:hbase_roles])
-    assert(@@global_himg.options[:base_image_name])
 
 #    @@global_himg.options.keys.each do |key|
 #      puts "#{key} => #{@@global_himg.options[key]}\n"
 #    end
 
-    cluster = HCluster.new :label => 'amzn-ami-0.9.9-beta.x86_64-ebs'
+    cluster = HCluster.new :label => @@global_himg.options[:base_image_label]
     cluster.launchp(:slaves => 0)
 
     assert(cluster.dnsName)
