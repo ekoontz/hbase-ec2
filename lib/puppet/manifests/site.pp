@@ -41,7 +41,7 @@ class install_runtime {
   file { "/opt/hadoop-common":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*",'src',"*.class",'jdiff','patches'],
+    ignore => [".git*",'src','jdiff','patches'],
     source => "puppet://puppet/files/hadoop-common",
     recurse => true,
     purge => true
@@ -50,7 +50,7 @@ class install_runtime {
   file { "/opt/hbase":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*",'src',"*.class"],
+    ignore => [".git*",'src'],
     source => "puppet://puppet/files/hbase",
     recurse => true,
     purge => true
@@ -59,7 +59,7 @@ class install_runtime {
   file { "/opt/solr":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*",'src',"*.class",'jdiff','patches'],
+    ignore => [".git*",'src','jdiff','patches'],
     source => "puppet://puppet/files/solr",
     recurse => true,
     purge => true
@@ -98,7 +98,7 @@ class zookeeper {
   file { "/opt/zookeeper":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*",'src',"*.class",'docs'],
+    ignore => [".git*",'src','docs'],
     source => "puppet://puppet/files/zookeeper",
     recurse => true
   }
@@ -218,7 +218,7 @@ class lily_server {
   file { "/opt/lily":
     owner => ec2-user,
     group => ec2-user,
-    ignore => [".git*",".svn",'src',"*.class",'docs'],
+    ignore => [".git*",".svn",'src','docs'],
     source => "puppet://puppet/files/lily",
     recurse => true
   }
@@ -543,19 +543,37 @@ class lily_sources {
     subscribe => Exec["solr"],
     notify => Exec["compile_solr"]
   }
-
-  exec { "lily":
+# use wget of binary 0.2.1 distribution ("wget_lily") below instead.
+#  exec { "lily":
     #    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/trunk lily",
-    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/tags/RELEASE_0_2_1 lily",
+#    command => "svn co http://dev.outerthought.org/svn_public/outerthought_lilyproject/tags/RELEASE_0_2_1 lily",
+#    command => "touch /tmp/workingonlily",
+#    user => "ec2-user",
+#    group => "ec2-user",
+#    cwd => "/home/ec2-user",
+#    path => ["/bin","/usr/bin"],
+#    creates => "/tmp/workingonlily",
+#    subscribe => Exec["untar_lily"]
+#  }
+
+  exec { "wget_lily":
+    command => "wget http://ekoontz-tarballs.s3.amazonaws.com/m2.tar.gz -O /tmp/puppetfiles/lily-0.2.1.tar.gz",
+    user => ec2-user,
+    group => ec2-user,
+    cwd => "/home/ec2-user",
+    creates => "/tmp/puppetfiles/lily-0.2.1.tar.gz",
+    path => ["/bin","/usr/bin"]
+  }
+  
+  exec { "untar_lily":
+    exec => "tar -xzf /tmp/puppetfiles/lily-0.2.1.tar.gz",
     user => "ec2-user",
     group => "ec2-user",
-    cwd => "/home/ec2-user",
-    onlyif => ["test -x /usr/bin/git","test ! -d /home/ec2-user/lily"],
+    cwd => "/opt",
+    creates => "/opt/lily-0.2.1",
     path => ["/bin","/usr/bin"],
-    creates => "/home/ec2-user/lily",
-    notify => Exec["compile_lily"]
-  }
-
+    subscribe => Exec["wget_lily"]
+  }	 
   
 }
  
@@ -682,7 +700,7 @@ class stage_lily {
      user => "ec2-user",
      group => "ec2-user",
      path => ["/bin","/usr/bin"],
-     subscribe => Exec["compile_lily"],
+#     subscribe => Exec["compile_lily"],
      refreshonly => true
    }
    exec {"stage_lily_config":
