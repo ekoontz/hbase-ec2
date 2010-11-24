@@ -213,7 +213,7 @@ class master {
 
 class lily_server {
   include install_runtime
-  include stage_lily
+#  include stage_lily
   
   file { "/opt/lily":
     owner => ec2-user,
@@ -557,7 +557,7 @@ class lily_sources {
 #  }
 
   exec { "wget_lily":
-    command => "wget http://ekoontz-tarballs.s3.amazonaws.com/m2.tar.gz -O /tmp/puppetfiles/lily-0.2.1.tar.gz",
+    command => "wget http://ekoontz-tarballs.s3.amazonaws.com/lily-0.2.1.tar.gz -O /tmp/puppetfiles/lily-0.2.1.tar.gz",
     user => ec2-user,
     group => ec2-user,
     cwd => "/home/ec2-user",
@@ -566,7 +566,7 @@ class lily_sources {
   }
   
   exec { "untar_lily":
-    exec => "tar -xzf /tmp/puppetfiles/lily-0.2.1.tar.gz",
+    command => "tar -xzf /tmp/puppetfiles/lily-0.2.1.tar.gz",
     user => "ec2-user",
     group => "ec2-user",
     cwd => "/opt",
@@ -634,17 +634,17 @@ class build {
      creates => "/home/ec2-user/solr/build"
    }
 
-   exec {"compile_lily":
-     user => "ec2-user",
-     group => "ec2-user",
-     command => "mvn jar:jar",
-     cwd => "/home/ec2-user/lily",
-     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-2.2.1/bin","/bin","/usr/bin"],
-     environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
-     subscribe => [ Exec["untar_jdk"],Exec["untar_maven_2"],Exec["lily"] ],
-     refreshonly => true,
-     notify => Exec["stage_lily"]
-   }
+#   exec {"compile_lily":
+#     user => "ec2-user",
+#     group => "ec2-user",
+#     command => "mvn jar:jar",
+#     cwd => "/home/ec2-user/lily",
+#     path => ["/home/ec2-user/jdk1.6.0_22/bin","/home/ec2-user/apache-maven-2.2.1/bin","/bin","/usr/bin"],
+#     environment => ["JAVA_HOME=/home/ec2-user/jdk1.6.0_22"],
+#     subscribe => [ Exec["untar_jdk"],Exec["untar_maven_2"],Exec["lily"] ],
+#     refreshonly => true,
+#     notify => Exec["stage_lily"]
+#   }
    
    include initscripts
 }
