@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # chkconfig: 345 55 25
-# hadoop-namenode
+# lily_server
 #
 # Author:       Eugene Koontz <ekoontz@hiro-tan.org>
 #
-# Description:  Hadoop Namenode Daemon
+# Description:  Lily: The Scalable Content Repository
 #               Intended to work well with Puppet and Amazon EC2: 
 #               see: 
 #                 http://github.com/ekoontz/hbase-ec2/blob/puppet/lib/puppet/manifests/site.pp
