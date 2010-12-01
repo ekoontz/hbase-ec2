@@ -123,7 +123,8 @@ class zookeeper {
     subscribe => [ File["/opt/zookeeper/conf/zoo.cfg"] ],
     ensure => true,
     pattern => "zookeeper",
-    enable => true
+    enable => true,
+    onlyif => "test -f /etc/init.d/zookeeper-quorum-member"
   }
 }
 
@@ -136,7 +137,8 @@ class datanode {
   service { "hadoop-datanode":
     ensure => true,
     pattern => "datanode",
-    enable => true
+    enable => true,
+    onlyif => "test -f /etc/init.d/hadoop-datanode"
   }
 }
 
@@ -149,7 +151,8 @@ class tasktracker {
   service { "hadoop-tasktracker":
     ensure => true,
     pattern => "tasktracker",
-    enable => true
+    enable => true,
+    onlyif => "test -f /etc/init.d/hadoop-tasktracker"
   }
 }
 
@@ -162,7 +165,8 @@ class jobtracker {
   service { "hadoop-jobtracker":
     ensure => true,
     pattern => "jobtracker",
-    enable => true
+    enable => true,
+    onlyif => "test -f /etc/init.d/hadoop-jobtracker"
   }
 }
 
@@ -181,7 +185,8 @@ class namenode {
   service { "hadoop-namenode":
     ensure => true,
     pattern => "namenode",
-    enable => true
+    enable => true,
+    onlyif => "test -f /etc/init.d/hadoop-namenode"
   }
 }
 
@@ -194,7 +199,8 @@ class regionserver {
   service { "hbase-regionserver":
     ensure => true,
     pattern => "regionserver",
-    enable => true
+    enable => true,
+    onlyif => "test -f /etc/init.d/hbase-regionserver"
   }
 }
 
@@ -207,7 +213,8 @@ class master {
   service { "hbase-master":
     ensure => true,
     pattern => "hbase-ec2-user-master",
-    enable => true
+    enable => true,
+    onlyif => "test -f /etc/init.d/hbase-master"
   }
 }
 
