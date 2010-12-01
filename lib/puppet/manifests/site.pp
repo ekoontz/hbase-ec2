@@ -91,10 +91,7 @@ class install_runtime {
     mode => 644,
     owner => ec2-user
   }
-}
 
-class zookeeper {
-  include install_runtime
   file { "/opt/zookeeper":
     owner => ec2-user,
     group => ec2-user,
@@ -102,6 +99,11 @@ class zookeeper {
     source => "puppet://puppet/files/zookeeper",
     recurse => true
   }
+
+}
+
+class zookeeper {
+  include install_runtime
 
   file { "/opt/zookeeper/conf/zoo.cfg":
     source => "puppet://puppet/files/zoo.cfg",
