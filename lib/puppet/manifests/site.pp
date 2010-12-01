@@ -120,11 +120,10 @@ class zookeeper {
     source => "puppet://puppet/files/zookeeper-quorum-member"
   }
   service { "zookeeper-quorum-member":
-    subscribe => [ File["/opt/zookeeper/conf/zoo.cfg"] ],
+    subscribe => [ File["/opt/zookeeper/conf/zoo.cfg"], File["/etc/init.d/zookeeper-quorum-member"] ],
     ensure => true,
     pattern => "zookeeper",
-    enable => true,
-    onlyif => "test -f /etc/init.d/zookeeper-quorum-member"
+    enable => true
   }
 }
 
@@ -135,10 +134,10 @@ class datanode {
     source => "puppet://puppet/files/hadoop-datanode"
   }
   service { "hadoop-datanode":
+    subscribe => [ File["/etc/init.d/hadoop-datanode"] ],
     ensure => true,
     pattern => "datanode",
-    enable => true,
-    onlyif => "test -f /etc/init.d/hadoop-datanode"
+    enable => true
   }
 }
 
@@ -149,10 +148,10 @@ class tasktracker {
     source => "puppet://puppet/files/hadoop-tasktracker"
   }
   service { "hadoop-tasktracker":
+    subscribe => [ File["/etc/init.d/hadoop-tasktracker"] ],
     ensure => true,
     pattern => "tasktracker",
-    enable => true,
-    onlyif => "test -f /etc/init.d/hadoop-tasktracker"
+    enable => true
   }
 }
 
@@ -166,7 +165,7 @@ class jobtracker {
     ensure => true,
     pattern => "jobtracker",
     enable => true,
-    onlyif => "test -f /etc/init.d/hadoop-jobtracker"
+    subscribe => [ File["/etc/init.d/hadoop-jobtracker"] ]
   }
 }
 
@@ -186,7 +185,7 @@ class namenode {
     ensure => true,
     pattern => "namenode",
     enable => true,
-    onlyif => "test -f /etc/init.d/hadoop-namenode"
+    subscribe => [ File["/etc/init.d/hadoop-namenode"] ]
   }
 }
 
@@ -200,7 +199,7 @@ class regionserver {
     ensure => true,
     pattern => "regionserver",
     enable => true,
-    onlyif => "test -f /etc/init.d/hbase-regionserver"
+    subscribe => [ File["/etc/init.d/hbase-regionserver"] ]
   }
 }
 
@@ -214,7 +213,7 @@ class master {
     ensure => true,
     pattern => "hbase-ec2-user-master",
     enable => true,
-    onlyif => "test -f /etc/init.d/hbase-master"
+    subscribe => [ File["/etc/init.d/hbase-master"] ]
   }
 }
 
