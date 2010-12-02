@@ -5,7 +5,7 @@
 #
 # Author:       Eugene Koontz <ekoontz@hiro-tan.org>
 #
-# Description:  Hbase Regionserver Daemon
+# Description:  HBase Regionserver Daemon
 #               Intended to work well with Puppet and Amazon EC2: 
 #               see: 
 #                 http://github.com/ekoontz/hbase-ec2/blob/puppet/lib/puppet/manifests/site.pp
